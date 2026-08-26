@@ -2,31 +2,37 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة التحكم - بلان هاوس سوريا</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f1f5f9; padding: 20px; direction: rtl; }
-        .container { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; }
-        .form-card { flex: 1; min-width: 320px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .map-card { flex: 1.5; min-width: 350px; height: 600px; background: white; border-radius: 12px; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #f1f5f9; padding: 15px; direction: rtl; }
+        .header { background: #0f172a; color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
+        .container { display: flex; flex-direction: column; gap: 15px; max-width: 1200px; margin: 0 auto; }
+        @media(min-width: 768px) { .container { flex-direction: row; } }
+        .form-card { flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .map-card { flex: 1.5; height: 450px; background: white; border-radius: 12px; overflow: hidden; }
         #adminMap { width: 100%; height: 100%; }
         .input-group { margin-bottom: 12px; }
         .input-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #334155; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
         .secret-section { background: #fef2f2; border: 1px dashed #ef4444; padding: 12px; border-radius: 8px; margin-top: 15px; }
         .secret-title { color: #dc2626; font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; }
-        .btn-submit { background: #2563eb; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-submit { background: #16a34a; color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 10px; }
+        .btn-submit:active { background: #15803d; }
     </style>
 </head>
 <body>
 
-<h2>🔒 لوحة المالك (بلان هاوس) - تحديد العقار في سوريا</h2>
-<p style="color: #64748b; margin-bottom: 20px;">انقر فوق البيت/الأرض على خريطة القمر الصناعي لتحديد موقع العقار بدقة.</p>
+<div class="header">
+    <h2>🔒 لوحة المالك (بلان هاوس) - إضافة عقار في سوريا</h2>
+</div>
 
 <div class="container">
     <div class="form-card">
-        <h3>بيانات العقار الجديدة</h3>
+        <h3>بيانات العقار الجديد</h3>
         <hr style="margin: 10px 0;"><br>
 
         <div class="input-group">
@@ -36,16 +42,16 @@
 
         <div class="input-group">
             <label>عنوان العقار:</label>
-            <input type="text" id="title" placeholder="شقة، فيلا، أرض...">
+            <input type="text" id="title" placeholder="مثال: شقة للبيع في المزة">
         </div>
 
         <div class="input-group">
             <label>نوع العقار:</label>
             <select id="type">
-                <option>شقة / فيلا</option>
-                <option>أرض</option>
+                <option>شقة سكنية</option>
+                <option>أرض / مقسم</option>
                 <option>محل تجاري</option>
-                <option>مزرعة</option>
+                <option>مزرعة / فيلا</option>
             </select>
         </div>
 
@@ -55,32 +61,32 @@
         </div>
 
         <div class="input-group">
-            <label>المساحة والمواصفات:</label>
-            <input type="text" id="specs" placeholder="المساحة، الغرف...">
+            <label>المساحة والتقسيم:</label>
+            <input type="text" id="specs" placeholder="مثال: 150 م² - 3 غرف وصالون">
         </div>
 
         <div class="input-group">
-            <label>الإحداثيات (تحدد بالنقر على الخريطة):</label>
-            <input type="text" id="coords" readonly placeholder="اضغط على الخريطة لتحديد المكان">
+            <label>موقع العقار (انقر فوق البيت على الخريطة لتحديده):</label>
+            <input type="text" id="coords" readonly style="background:#f8fafc;" placeholder="اضغط على الخريطة أولاً لتحديد المكان">
         </div>
 
         <div class="secret-section">
-            <div class="secret-title">🔒 بيانات سرية (تظهر لك فقط):</div>
+            <div class="secret-title">🔒 بيانات سرية (تظهر لك فقط ولن تظهر للزبائن):</div>
             <div class="input-group">
-                <label>اسم المالك الأصلي:</label>
-                <input type="text" id="ownerName" placeholder="اسم صاحب العقار">
+                <label>اسم صاحب العقار:</label>
+                <input type="text" id="ownerName" placeholder="اسم المالك الأصلي">
             </div>
             <div class="input-group">
-                <label>رقم هاتف المالك الأصلي:</label>
+                <label>رقم هاتف المالك:</label>
                 <input type="text" id="ownerPhone" placeholder="09xxxxxxxx">
             </div>
             <div class="input-group">
-                <label>العمولة / أرقام خاصة:</label>
-                <input type="text" id="commission" placeholder="تفاصيل العمولة والصافي">
+                <label>العمولة والصافي:</label>
+                <input type="text" id="commission" placeholder="تفاصيل العمولة الحصرية">
             </div>
         </div>
 
-        <button class="btn-submit" onclick="saveProperty()">حفظ ونشر العقار</button>
+        <button class="btn-submit" onclick="saveProperty()">✅ حفظ ونشر العقار فوراً</button>
     </div>
 
     <div class="map-card">
@@ -89,26 +95,63 @@
 </div>
 
 <script>
-    // التمركز على سوريا بالصور الجوية
+    // 1. تثبيت الخريطة على سوريا بالصور الجوية
     const adminMap = L.map('adminMap').setView([33.5138, 36.2765], 13);
     
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(adminMap);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd' }).addTo(adminMap);
 
     let selectedMarker = null;
+    let selectedLat = null;
+    let selectedLng = null;
 
+    // 2. عند النقر على الخريطة يتم تحديد الإحداثيات وضع الدبوس
     adminMap.on('click', function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
+        selectedLat = e.latlng.lat;
+        selectedLng = e.latlng.lng;
 
         if (selectedMarker) adminMap.removeLayer(selectedMarker);
 
-        selectedMarker = L.marker([lat, lng]).addTo(adminMap);
-        document.getElementById('coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        selectedMarker = L.marker([selectedLat, selectedLng]).addTo(adminMap);
+        document.getElementById('coords').value = selectedLat.toFixed(5) + ", " + selectedLng.toFixed(5);
     });
 
+    // 3. وظيفة حفظ العقار
     function saveProperty() {
-        alert('تم حفظ العقار بنجاح وسيظهر للعملاء على الخريطة!');
+        const title = document.getElementById('title').value;
+        const price = document.getElementById('price').value;
+        
+        if (!title || !selectedLat) {
+            alert('❌ يرجى اختيار موقع العقار على الخريطة وإدخال العنوان على الأقل!');
+            return;
+        }
+
+        const newProperty = {
+            id: document.getElementById('propId').value || "SY-" + Math.floor(Math.random() * 1000),
+            title: title,
+            type: document.getElementById('type').value,
+            price: price,
+            specs: document.getElementById('specs').value,
+            lat: selectedLat,
+            lng: selectedLng,
+            ownerName: document.getElementById('ownerName').value,
+            ownerPhone: document.getElementById('ownerPhone').value,
+            commission: document.getElementById('commission').value
+        };
+
+        // جلب العقارات المخزنة سابقاً وإضافة العقار الجديد إليها
+        let savedProperties = JSON.parse(localStorage.getItem('plan_house_properties') || '[]');
+        savedProperties.push(newProperty);
+        localStorage.setItem('plan_house_properties', JSON.stringify(savedProperties));
+
+        alert('🎉 تم حفظ العقار ونشره بنجاح!');
+        
+        // إعادة تفريغ الحقول
+        document.getElementById('title').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('specs').value = '';
+        document.getElementById('coords').value = '';
+        if (selectedMarker) adminMap.removeLayer(selectedMarker);
     }
 </script>
 </body>
