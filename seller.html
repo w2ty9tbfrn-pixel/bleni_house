@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Plan House - لوحة التحكم للمالك</title>
+  <style>
+    :root {
+      --brand-blue: #0A2540;
+      --brand-accent: #00D4B2;
+      --map-bg: #E5E3DF;
+      --map-text: #202124;
+      --danger-red: #D93025;
+    }
+
+    body {
+      font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+      background-color: var(--map-bg);
+      color: var(--map-text);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .seller-header {
+      background-color: var(--brand-blue);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-bottom: 4px solid var(--brand-accent);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: #FFFFFF;
+      border: 1px solid #DADCE0;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.15);
+    }
+
+    .section-title {
+      font-weight: bold;
+      color: var(--brand-blue);
+      border-bottom: 2px solid #EEE;
+      padding-bottom: 5px;
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 13px;
+      display: block;
+      margin-top: 8px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 4px 0 10px 0;
+      border: 1px solid #DADCE0;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+      color: var(--map-text);
+    }
+
+    button.btn-save {
+      background-color: var(--brand-blue);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+      font-size: 16px;
+      margin-top: 15px;
+    }
+
+    button.btn-save:hover { background-color: #1A365D; }
+
+    .my-property-item {
+      border: 1px solid #DADCE0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background-color: #FAFAFA;
+    }
+
+    .media-preview img, .media-preview video {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-left: 5px;
+    }
+
+    .btn-delete {
+      background-color: var(--danger-red);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      float: left;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="seller-header">
+    <h1 style="margin:0; font-size: 22px;">Plan House | إدخال وإدارة العقارات (المالك)</h1>
+  </div>
+
+  <div class="container">
+    
+    <!-- استمارة الإدخال الشاملة -->
+    <div class="card">
+      <h3 style="color: var(--brand-blue); margin-top:0;">إضافة عقار جديد</h3>
+      
+      <form id="sellerForm">
+        <div class="section-title">1. البيانات الأساسية</div>
+        <label>اسم العقار:</label>
+        <input type="text" id="title" placeholder="مثال: فيلا للبيع مع مسبح" required>
+
+        <label>المنطقة / الشارع (مثل خرائط جوجل):</label>
+        <input type="text" id="street" placeholder="مثال: الشام - الصالحية - شارع الحمراء" required>
+
+        <label>السعر:</label>
+        <input type="number" id="price" placeholder="مثال: 150000" required>
+
+        <label>رقم الواتساب (مع رمز الدولة):</label>
+        <input type="tel" id="whatsapp" placeholder="مثال: 963912345678" required>
+
+        <div class="section-title">2. الوسائط (صور وفيديو)</div>
+        <label>إضافة صور للعقار (يمكن اختيار أكثر من صورة):</label>
+        <input type="file" id="images" accept="image/*" multiple>
+
+        <label>إضافة فيديو للعقار:</label>
+        <input type="file" id="video" accept="video/*">
+
+        <div class="section-title">3. روابط التواصل الاجتماعي</div>
+        <label>رابط صفحة العقار / المالك (فيسبوك، إنستغرام، تيك توك...):</label>
+        <input type="url" id="socialLink" placeholder="https://instagram.com/your-property">
+
+        <label>تفاصيل إضافية:</label>
+        <textarea id="details" rows="3" placeholder="المساحة، عدد الغرف..."></textarea>
+
+        <button type="submit" class="btn-save">حفظ ونشر العقار فوراً</button>
+      </form>
+    </div>
+
+    <!-- قائمة عقارات المالك -->
+    <div class="card">
+      <h3 style="color: var(--brand-blue); margin-top:0;">عقاراتي المعروضة</h3>
+      <div id="myPropertiesList"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let properties = JSON.parse(localStorage.getItem('plan_house_db')) || [];
+
+    window.onload = function() { loadSellerProperties(); };
+
+    // تحويل الملفات (صور/فيديو) إلى روابط نصوص للحفظ
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    document.getElementById('sellerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // معالجة الصور
+      const imageFiles = document.getElementById('images').files;
+      const imageUrls = [];
+      for (let i = 0; i < imageFiles.length; i++) {
+        const base64 = await fileToBase64(imageFiles[i]);
+        imageUrls.push(base64);
+      }
+
+      // معالجة الفيديو
+      const videoFile = document.getElementById('video').files[0];
+      let videoUrl = "";
+      if (videoFile) {
+        videoUrl = await fileToBase64(videoFile);
+      }
+
+      const newProperty = {
+        id: Date.now(),
+        title: document.getElementById('title').value,
+        street: document.getElementById('street').value,
+        price: parseFloat(document.getElementById('price').value),
+        whatsapp: document.getElementById('whatsapp').value,
+        socialLink: document.getElementById('socialLink').value,
+        details: document.getElementById('details').value,
+        images: imageUrls,
+        video: videoUrl
+      };
+
+      properties.push(newProperty);
+      localStorage.setItem('plan_house_db', JSON.stringify(properties));
+
+      loadSellerProperties();
+      this.reset();
+      alert('تم حفظ العقار بجميع الصور والفيديوهات والروابط بنجاح!');
+    });
+
+    function loadSellerProperties() {
+      const listDiv = document.getElementById('myPropertiesList');
+      listDiv.innerHTML = '';
+
+      if (properties.length === 0) {
+        listDiv.innerHTML = '<p style="color:#70757A;">لم تقم بإضافة أي عقار بعد.</p>';
+        return;
+      }
+
+      properties.forEach(item => {
+        let imgsHTML = item.images ? item.images.map(img => `<img src="${img}">`).join('') : '';
+        let videoHTML = item.video ? `<video src="${item.video}" controls style="width:100%; max-height:150px; margin-top:5px;"></video>` : '';
+        let socialHTML = item.socialLink ? `<div style="font-size:12px; margin-top:4px;"><a href="${item.socialLink}" target="_blank">🔗 رابط التواصل الاجتماعي</a></div>` : '';
+
+        listDiv.innerHTML += `
+          <div class="my-property-item">
+            <button class="btn-delete" onclick="deleteProperty(${item.id})">حذف</button>
+            <strong style="color: var(--brand-blue);">${item.title}</strong>
+            <div style="font-size:12px; color:#5F6368;">📍 ${item.street}</div>
+            <div style="font-size:13px; font-weight:bold;">💰 ${item.price.toLocaleString()}</div>
+            <div style="font-size:12px; color:#25D366;">📱 ${item.whatsapp}</div>
+            ${socialHTML}
+            <div class="media-preview" style="margin-top:8px;">${imgsHTML}</div>
+            ${videoHTML}
+          </div>
+        `;
+      });
+    }
+
+    function deleteProperty(id) {
+      if (confirm('هل أنت متاكد من حذف هذا العقار؟')) {
+        properties = properties.filter(item => item.id !== id);
+        localStorage.setItem('plan_house_db', JSON.stringify(properties));
+        loadSellerProperties();
+      }
+    }
+  </script>
+
+</body>
+</html>
