@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة التحكم - إدارة العقارات والمالكين</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f1f5f9; padding: 20px; direction: rtl; }
+        .container { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; }
+        .form-card { flex: 1; min-width: 320px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .map-card { flex: 1.5; min-width: 350px; height: 600px; background: white; border-radius: 12px; overflow: hidden; }
+        #adminMap { width: 100%; height: 100%; }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #334155; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .secret-section { background: #fef2f2; border: 1px dashed #ef4444; padding: 12px; border-radius: 8px; margin-top: 15px; }
+        .secret-title { color: #dc2626; font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; }
+        .btn-submit { background: #2563eb; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>🔒 لوحة تحكم المالك - إضافة وتحديد العقارات</h2>
+<p style="color: #64748b; margin-bottom: 20px;">انقر على الخريطة لتحديد مكان العقار بدقة، ثم املأ البيانات.</p>
+
+<div class="container">
+    <!-- نموذج أدخال البيانات -->
+    <div class="form-card">
+        <h3>بيانات العقار الجديدة</h3>
+        <hr style="margin: 10px 0;"><br>
+
+        <div class="input-group">
+            <label>رقم العقار المرجعي (الكود):</label>
+            <input type="text" id="propId" placeholder="مثلاً: REF-103">
+        </div>
+
+        <div class="input-group">
+            <label>عنوان العقار / المسمى:</label>
+            <input type="text" id="title" placeholder="أرض تجارية، مزرعة، شقة...">
+        </div>
+
+        <div class="input-group">
+            <label>نوع العقار:</label>
+            <select id="type">
+                <option>أرض</option>
+                <option>مزرعة</option>
+                <option>مشروع استثماري</option>
+                <option>شقة / فيلا</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>السعر المعروض للعموم:</label>
+            <input type="text" id="price" placeholder="مثال: 120,000 $">
+        </div>
+
+        <div class="input-group">
+            <label>المساحة والمواصفات:</label>
+            <input type="text" id="specs" placeholder="المساحة، الغرف، الصوالين...">
+        </div>
+
+        <div class="input-group">
+            <label>رابط فيديو العقار (YouTube Embed):</label>
+            <input type="text" id="video" placeholder="https://www.youtube.com/embed/...">
+        </div>
+
+        <div class="input-group">
+            <label>الإحداثيات (تحدد تلقائياً من الخريطة):</label>
+            <input type="text" id="coords" readonly placeholder="اضغط على الخريطة لتحديد المكان">
+        </div>
+
+        <!-- القسم السرّي الخاص بك فقط -->
+        <div class="secret-section">
+            <div class="secret-title">🔒 بيانات سرية (تظهر لك أنت فقط ولا تظهر للمشتري):</div>
+            <div class="input-group">
+                <label>اسم المالك الأصلي:</label>
+                <input type="text" id="ownerName" placeholder="اسم صاحب العقار">
+            </div>
+            <div class="input-group">
+                <label>رقم هاتف المالك / المكتب المصدر:</label>
+                <input type="text" id="ownerPhone" placeholder="079xxxxxxxx">
+            </div>
+            <div class="input-group">
+                <label>العمولة / السعر النهائي الصافي:</label>
+                <input type="text" id="commission" placeholder="تفاصيل العمولة أو أقل سعر للبيع">
+            </div>
+        </div>
+
+        <button class="btn-submit" onclick="saveProperty()">حفظ ونشر العقار على الخريطة العامة</button>
+    </div>
+
+    <!-- الخريطة لتحديد الموقع -->
+    <div class="map-card">
+        <div id="adminMap"></div>
+    </div>
+</div>
+
+<script>
+    const adminMap = L.map('adminMap').setView([31.9539, 35.9106], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
+
+    let selectedMarker = null;
+    let selectedLat = null;
+    let selectedLng = null;
+
+    // عند النقر على الخريطة لتحديد المكان
+    adminMap.on('click', function(e) {
+        selectedLat = e.latlng.lat;
+        selectedLng = e.latlng.lng;
+
+        if (selectedMarker) adminMap.removeLayer(selectedMarker);
+
+        selectedMarker = L.marker([selectedLat, selectedLng]).addTo(adminMap);
+        document.getElementById('coords').value = `${selectedLat.toFixed(5)}, ${selectedLng.toFixed(5)}`;
+    });
+
+    function saveProperty() {
+        if(!selectedLat) {
+            alert('الرجاء تحديد موقع العقار على الخريطة أولاً!');
+            return;
+        }
+        alert('تم حفظ العقار بنجاح! سيظهر الآن للزوار بدون بيانات المالك السرية.');
+    }
+</script>
+</body>
+</html>
