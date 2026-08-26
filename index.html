@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المكتب العقاري - الخريطة التفاعلية</title>
+    <!-- مكتبة الخرائط Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body, html { width: 100%; height: 100%; overflow: hidden; }
+        #map { width: 100%; height: 100vh; z-index: 1; }
+        
+        /* شريط العنوان */
+        .header-bar {
+            position: absolute; top: 15px; right: 15px; left: 15px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.95); padding: 12px 20px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-bar h1 { font-size: 1.1rem; color: #1e293b; }
+        
+        /* النافذة المنزلقة للتفاصيل */
+        .property-drawer {
+            position: absolute; bottom: -100%; left: 0; right: 0; z-index: 1001;
+            background: #fff; border-radius: 20px 20px 0 0; padding: 20px;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.2); transition: bottom 0.4s ease; max-height: 80vh; overflow-y: auto;
+        }
+        .property-drawer.active { bottom: 0; }
+        .close-btn { float: left; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+        .property-title { font-size: 1.3rem; color: #0f172a; margin-bottom: 8px; font-weight: bold; }
+        .property-price { font-size: 1.2rem; color: #16a34a; font-weight: bold; margin-bottom: 12px; }
+        .property-specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        .spec-item { font-size: 0.9rem; color: #334155; }
+        .video-container { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+        .video-container iframe, .video-container video { width: 100%; height: 200px; border: none; }
+        .whatsapp-btn {
+            display: block; width: 100%; background: #25D366; color: white; text-align: center;
+            padding: 12px; border-radius: 10px; font-weight: bold; text-decoration: none; font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <h1>📍 استكشف العقارات والفرص الاستثمارية</h1>
+    </div>
+
+    <!-- الخريطة -->
+    <div id="map"></div>
+
+    <!-- نافذة تفاصيل العقار عند الضغط -->
+    <div class="property-drawer" id="propertyDrawer">
+        <span class="close-btn" onclick="closeDrawer()">&times;</span>
+        <div class="property-title" id="propTitle">رقم العقار: REF-101</div>
+        <div class="property-price" id="propPrice">00,000 $</div>
+        
+        <div class="video-container" id="videoBox"></div>
+
+        <div class="property-specs">
+            <div class="spec-item">📐 <b>المساحة:</b> <span id="propArea">-</span></div>
+            <div class="spec-item">🏷️ <b>النوع:</b> <span id="propType">-</span></div>
+            <div class="spec-item">🚪 <b>الغرف/التقسيم:</b> <span id="propRooms">-</span></div>
+            <div class="spec-item">📍 <b>المنطقة:</b> <span id="propLocation">-</span></div>
+        </div>
+
+        <p id="propDescription" style="font-size:0.9rem; color:#475569; margin-bottom:15px;"></p>
+
+        <a href="#" id="whatsappBtn" target="_blank" class="whatsapp-btn">💬 تواصل عبر الواتساب للاستفسار</a>
+    </div>
+
+    <script>
+        // 1. تهيئة الخريطة (مركزة مبدئياً)
+        const map = L.map('map').setView([31.9539, 35.9106], 11); // إحداثيات افتراضية
+
+        // إضافة طبقة خريطة الشارع
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // رقم واتساب المكتب الخاص بك (ضع رقمك هنا مع المفتاح الدولي)
+        const MY_OFFICE_WHATSAPP = "962790000000"; 
+
+        // بيانات تجريبية (سيتم ربطها تلقائياً مع لوحة تحكمك لاحقاً)
+        const properties = [
+            {
+                id: "REF-101",
+                title: "أرض استثمارية مميزة",
+                type: "أرض",
+                price: "150,000 $",
+                area: "1000 م²",
+                rooms: "غير محدد",
+                location: "عمان - شفا بدران",
+                lat: 32.03, lng: 35.88,
+                video: "https://www.youtube.com/embed/tgbNymZ7vqY",
+                description: "أرض مستوية على شارعين مناسبة لبناء مشروع سكني أو أراضي مزارع."
+            },
+            {
+                id: "REF-102",
+                title: "مزرعة حديثة للبيع",
+                type: "مزرعة",
+                price: "280,000 $",
+                area: "4000 م²",
+                rooms: "بيت 3 غرف + صالة",
+                location: "جرش",
+                lat: 32.27, lng: 35.89,
+                video: "",
+                description: "مزرعة مشجرة بالكامل تحتوي على مصدر مياه وبيت ريفي جديد."
+            }
+        ];
+
+        // إظهار العقارات كدبابيس على الخريطة
+        properties.forEach(prop => {
+            const marker = L.marker([prop.lat, prop.lng]).addTo(map);
+            marker.on('click', () => openDrawer(prop));
+        });
+
+        function openDrawer(prop) {
+            document.getElementById('propTitle').innerText = prop.title + " (" + prop.id + ")";
+            document.getElementById('propPrice').innerText = prop.price;
+            document.getElementById('propArea').innerText = prop.area;
+            document.getElementById('propType').innerText = prop.type;
+            document.getElementById('propRooms').innerText = prop.rooms;
+            document.getElementById('propLocation').innerText = prop.location;
+            document.getElementById('propDescription').innerText = prop.description;
+
+            // فيديو العقار
+            const videoBox = document.getElementById('videoBox');
+            if(prop.video) {
+                videoBox.innerHTML = `<iframe src="${prop.video}" allowfullscreen></iframe>`;
+            } else {
+                videoBox.innerHTML = ``;
+            }
+
+            // رابط الواتساب المباشر لشركتك مع الكود المرجعي للعقار
+            const message = encodeURIComponent(`مرحباً، أود الاستفسار عن العقار رقم: ${prop.id} - ${prop.title}`);
+            document.getElementById('whatsappBtn').href = `https://wa.me/${MY_OFFICE_WHATSAPP}?text=${message}`;
+
+            document.getElementById('propertyDrawer').classList.add('active');
+        }
+
+        function closeDrawer() {
+            document.getElementById('propertyDrawer').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
