@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المكتب العقاري - الخريطة التفاعلية</title>
+    <title>بلان هاوس - خريطة العقارات في سوريا</title>
     <!-- مكتبة الخرائط Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -16,24 +16,24 @@
         .header-bar {
             position: absolute; top: 15px; right: 15px; left: 15px; z-index: 1000;
             background: rgba(255, 255, 255, 0.95); padding: 12px 20px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;
         }
-        .header-bar h1 { font-size: 1.1rem; color: #1e293b; }
+        .header-bar h1 { font-size: 1.1rem; color: #0f172a; font-weight: bold; }
         
         /* النافذة المنزلقة للتفاصيل */
         .property-drawer {
             position: absolute; bottom: -100%; left: 0; right: 0; z-index: 1001;
             background: #fff; border-radius: 20px 20px 0 0; padding: 20px;
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.2); transition: bottom 0.4s ease; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.3); transition: bottom 0.4s ease; max-height: 80vh; overflow-y: auto;
         }
         .property-drawer.active { bottom: 0; }
         .close-btn { float: left; font-size: 1.5rem; cursor: pointer; color: #64748b; }
-        .property-title { font-size: 1.3rem; color: #0f172a; margin-bottom: 8px; font-weight: bold; }
+        .property-title { font-size: 1.2rem; color: #0f172a; margin-bottom: 8px; font-weight: bold; }
         .property-price { font-size: 1.2rem; color: #16a34a; font-weight: bold; margin-bottom: 12px; }
         .property-specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
         .spec-item { font-size: 0.9rem; color: #334155; }
         .video-container { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
-        .video-container iframe, .video-container video { width: 100%; height: 200px; border: none; }
+        .video-container iframe { width: 100%; height: 200px; border: none; }
         .whatsapp-btn {
             display: block; width: 100%; background: #25D366; color: white; text-align: center;
             padding: 12px; border-radius: 10px; font-weight: bold; text-decoration: none; font-size: 1rem;
@@ -43,13 +43,13 @@
 <body>
 
     <div class="header-bar">
-        <h1>📍 استكشف العقارات والفرص الاستثمارية</h1>
+        <h1>🏠 بلان هاوس - عقارات سوريا</h1>
     </div>
 
     <!-- الخريطة -->
     <div id="map"></div>
 
-    <!-- نافذة تفاصيل العقار عند الضغط -->
+    <!-- نافذة تفاصيل العقار -->
     <div class="property-drawer" id="propertyDrawer">
         <span class="close-btn" onclick="closeDrawer()">&times;</span>
         <div class="property-title" id="propTitle">رقم العقار: REF-101</div>
@@ -60,7 +60,7 @@
         <div class="property-specs">
             <div class="spec-item">📐 <b>المساحة:</b> <span id="propArea">-</span></div>
             <div class="spec-item">🏷️ <b>النوع:</b> <span id="propType">-</span></div>
-            <div class="spec-item">🚪 <b>الغرف/التقسيم:</b> <span id="propRooms">-</span></div>
+            <div class="spec-item">🚪 <b>التقسيم:</b> <span id="propRooms">-</span></div>
             <div class="spec-item">📍 <b>المنطقة:</b> <span id="propLocation">-</span></div>
         </div>
 
@@ -70,46 +70,38 @@
     </div>
 
     <script>
-        // 1. تهيئة الخريطة (مركزة مبدئياً)
-        const map = L.map('map').setView([31.9539, 35.9106], 11); // إحداثيات افتراضية
+        // 1. مركز الخريطة على دمشق / سوريا بشكل افتراضي وبمستوى تكبير واضح
+        const map = L.map('map').setView([33.5138, 36.2765], 13);
 
-        // إضافة طبقة خريطة الشارع
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
+        // 2. استخدام خريطة القمر الصناعي (Satellite) لإظهار البيوت والمباني بدقة
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
         }).addTo(map);
 
-        // رقم واتساب المكتب الخاص بك (ضع رقمك هنا مع المفتاح الدولي)
-        const MY_OFFICE_WHATSAPP = "962790000000"; 
+        // إضافة اسماء الشوارع والمناطق فوق القمر الصناعي
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
 
-        // بيانات تجريبية (سيتم ربطها تلقائياً مع لوحة تحكمك لاحقاً)
+        const MY_OFFICE_WHATSAPP = "963900000000"; // رقم الواتساب الخاص بك
+
+        // عقارات تجريبية في سوريا
         const properties = [
             {
-                id: "REF-101",
-                title: "أرض استثمارية مميزة",
-                type: "أرض",
-                price: "150,000 $",
-                area: "1000 م²",
-                rooms: "غير محدد",
-                location: "عمان - شفا بدران",
-                lat: 32.03, lng: 35.88,
-                video: "https://www.youtube.com/embed/tgbNymZ7vqY",
-                description: "أرض مستوية على شارعين مناسبة لبناء مشروع سكني أو أراضي مزارع."
-            },
-            {
-                id: "REF-102",
-                title: "مزرعة حديثة للبيع",
-                type: "مزرعة",
-                price: "280,000 $",
-                area: "4000 م²",
-                rooms: "بيت 3 غرف + صالة",
-                location: "جرش",
-                lat: 32.27, lng: 35.89,
+                id: "SY-101",
+                title: "شقة سكنية مميزة",
+                type: "شقة",
+                price: "45,000 $",
+                area: "150 م²",
+                rooms: "3 غرف وصالون",
+                location: "دمشق - المزة",
+                lat: 33.5020, lng: 36.2480,
                 video: "",
-                description: "مزرعة مشجرة بالكامل تحتوي على مصدر مياه وبيت ريفي جديد."
+                description: "شقة إكساء سوبر ديلوكس قريبة من جميع الخدمات."
             }
         ];
 
-        // إظهار العقارات كدبابيس على الخريطة
         properties.forEach(prop => {
             const marker = L.marker([prop.lat, prop.lng]).addTo(map);
             marker.on('click', () => openDrawer(prop));
@@ -124,7 +116,6 @@
             document.getElementById('propLocation').innerText = prop.location;
             document.getElementById('propDescription').innerText = prop.description;
 
-            // فيديو العقار
             const videoBox = document.getElementById('videoBox');
             if(prop.video) {
                 videoBox.innerHTML = `<iframe src="${prop.video}" allowfullscreen></iframe>`;
@@ -132,8 +123,7 @@
                 videoBox.innerHTML = ``;
             }
 
-            // رابط الواتساب المباشر لشركتك مع الكود المرجعي للعقار
-            const message = encodeURIComponent(`مرحباً، أود الاستفسار عن العقار رقم: ${prop.id} - ${prop.title}`);
+            const message = encodeURIComponent(`مرحباً بلان هاوس، أود الاستفسار عن العقار رقم: ${prop.id} - ${prop.title}`);
             document.getElementById('whatsappBtn').href = `https://wa.me/${MY_OFFICE_WHATSAPP}?text=${message}`;
 
             document.getElementById('propertyDrawer').classList.add('active');
