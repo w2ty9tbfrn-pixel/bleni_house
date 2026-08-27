@@ -2,212 +2,191 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>Plan House - منصة العقارات (المشتري)</title>
+  <title>Plan House - بلان هاوس | تصفح العقارات في سوريا</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
       --brand-blue: #0A2540;
       --brand-accent: #00D4B2;
-      --map-bg: #E5E3DF;
-      --map-text: #202124;
     }
-
-    body {
-      font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
-      background-color: var(--map-bg);
-      color: var(--map-text);
-      margin: 0;
-      padding: 20px;
-    }
-
-    .app-header {
-      background-color: var(--brand-blue);
+    body { margin: 0; padding: 0; font-family: 'Roboto', 'Segoe UI', Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+    
+    .header {
+      background: var(--brand-blue);
       color: white;
-      padding: 15px 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      border-bottom: 4px solid var(--brand-accent);
+      padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 3px solid var(--brand-accent);
+      z-index: 1000;
     }
 
-    .card {
-      background: #FFFFFF;
-      border: 1px solid #DADCE0;
+    #map-container { flex: 1; position: relative; }
+    #map { width: 100%; height: 100%; }
+
+    /* شريط البحث والفلترة العائم */
+    .filter-box {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 12px;
       border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 1px 3px rgba(60,64,67,0.15);
-      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      width: 320px;
+      border: 1px solid #DADCE0;
     }
-
-    input {
+    .filter-box input, .filter-box select {
       width: 100%;
-      padding: 10px;
+      padding: 8px;
+      margin-bottom: 8px;
       border: 1px solid #DADCE0;
       border-radius: 4px;
       box-sizing: border-box;
-      font-size: 14px;
-      color: var(--map-text);
-    }
-
-    .properties-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-    }
-
-    .property-item {
-      border: 1px solid #E8EAED;
-      border-radius: 8px;
-      padding: 15px;
-      background: #FFFFFF;
-      border-top: 4px solid var(--brand-blue);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    /* معرض الصور */
-    .image-gallery {
-      display: flex;
-      gap: 5px;
-      overflow-x: auto;
-      margin: 10px 0;
-      padding-bottom: 5px;
-    }
-
-    .image-gallery img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-
-    video {
-      width: 100%;
-      border-radius: 6px;
-      margin-top: 8px;
-    }
-
-    .btn-whatsapp {
-      display: block;
-      text-align: center;
-      background-color: #25D366;
-      color: white;
-      text-decoration: none;
-      padding: 10px;
-      border-radius: 4px;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    .btn-social {
-      display: block;
-      text-align: center;
-      background-color: var(--brand-blue);
-      color: white;
-      text-decoration: none;
-      padding: 8px;
-      border-radius: 4px;
       font-size: 13px;
-      margin-top: 6px;
     }
+
+    /* تخصيص النافذة المنبثقة */
+    .popup-content { font-size: 13px; line-height: 1.5; direction: rtl; text-align: right; }
+    .popup-content h4 { margin: 0 0 5px 0; color: var(--brand-blue); font-size: 15px; }
+    .badge { display: inline-block; padding: 2px 6px; background: #E8F0FE; color: #1A73E8; border-radius: 4px; font-weight: bold; font-size: 11px; }
+    .gallery { display: flex; gap: 5px; overflow-x: auto; margin: 8px 0; }
+    .gallery img { width: 100px; height: 70px; object-fit: cover; border-radius: 4px; }
+    .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 8px; border-radius: 4px; text-decoration: none; font-weight: bold; margin-top: 8px; }
+    .btn-social { display: block; background: var(--brand-blue); color: white; text-align: center; padding: 6px; border-radius: 4px; text-decoration: none; font-size: 11px; margin-top: 4px; }
   </style>
 </head>
 <body>
 
-  <!-- غلاف الموقع -->
-  <div class="app-header">
-    <h1 style="margin:0; font-size:22px;">Plan House | بلان هاوس</h1>
-    <span>تصفح العقارات المتاحة</span>
-  </div>
+<div class="header">
+  <h2 style="margin:0; font-size:18px;">Plan House | بلان هاوس للعقارات</h2>
+  <a href="seller.html" style="background:var(--brand-accent); color:var(--brand-blue); padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">لوحة المالك</a>
+</div>
 
-  <!-- قسم البحث والفلترة -->
-  <div class="card">
-    <h3 style="color: var(--brand-blue); margin-top:0;">البحث والفلترة</h3>
-    <div style="display: flex; gap: 10px;">
-      <input type="text" id="searchInput" onkeyup="filterProperties()" placeholder="🔍 ابحث اسم الشارع، الحارة، أو المنطقة...">
-      <input type="number" id="maxPriceInput" onkeyup="filterProperties()" placeholder="💲 حد أقصى للسعر...">
+<div id="map-container">
+  <!-- شريط البحث والفلترة -->
+  <div class="filter-box">
+    <h4 style="margin:0 0 8px 0; color:var(--brand-blue);">🔍 البحث والتصفية</h4>
+    <input type="text" id="searchInput" onkeyup="filterMap()" placeholder="ابحث باسم الشارع، الحارة، أو المنطقة...">
+    <div style="display:flex; gap:5px;">
+      <select id="typeFilter" onchange="filterMap()">
+        <option value="">جميع أنواع العقارات</option>
+        <option value="شقة">شقة</option>
+        <option value="بيت">بيت</option>
+        <option value="أرض">أرض</option>
+        <option value="مشروع استثماري">مشروع استثماري</option>
+        <option value="فيلا">فيلا</option>
+        <option value="مزرعة">مزرعة</option>
+      </select>
+      <input type="number" id="maxPrice" onkeyup="filterMap()" placeholder="حد أقصى للسعر">
     </div>
   </div>
 
-  <!-- عرض العقارات -->
-  <div class="card">
-    <h3 style="color: var(--brand-blue); margin-top:0;">قائمة العقارات المعروضة</h3>
-    <div id="propertiesList" class="properties-grid"></div>
-  </div>
+  <div id="map"></div>
+</div>
 
-  <script>
-    let properties = JSON.parse(localStorage.getItem('plan_house_db')) || [];
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // تقييد حدود الخريطة بسوريا فقط
+  const syriaBounds = Leaflet.latLngBounds([32.3, 35.6], [37.3, 42.4]);
+  const map = L.map('map', { maxBounds: syriaBounds, maxBoundsViscosity: 1.0 }).setView([33.5138, 36.2765], 12);
 
-    window.onload = function() {
-      displayProperties(properties);
-    };
+  // طبقة خرائط Google Hybrid
+  L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    attribution: 'Google Maps | Plan House'
+  }).addTo(map);
 
-    function displayProperties(data) {
-      const listDiv = document.getElementById('propertiesList');
-      listDiv.innerHTML = '';
+  // تعريف ألوان الدبابيس المخصصة حسب النوع
+  const pinColors = {
+    'شقة': '#1E88E5',        // أزرق
+    'بيت': '#43A047',        // أخضر
+    'أرض': '#8D6E63',        // بني
+    'مشروع استثماري': '#8E24AA',// بنفسجي
+    'فيلا': '#FDD835',       // أصفر
+    'مزرعة': '#2E7D32'       // أخضر غامق
+  };
 
-      if (data.length === 0) {
-        listDiv.innerHTML = '<p style="color:#70757A;">لا توجد عقارات مطابقة حالياً.</p>';
-        return;
+  function createCustomIcon(color) {
+    const markerHtml = `<div style="background-color:${color}; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>`;
+    return L.divIcon({
+      className: 'custom-pin',
+      html: markerHtml,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+  }
+
+  let allProperties = JSON.parse(localStorage.getItem('plan_house_db')) || [];
+  let markersGroup = L.layerGroup().addTo(map);
+
+  function renderMarkers(data) {
+    markersGroup.clearLayers();
+
+    data.forEach(item => {
+      if(!item.lat || !item.lng) return;
+
+      const pinColor = pinColors[item.type] || '#E53935';
+      const marker = L.marker([item.lat, item.lng], { icon: createCustomIcon(pinColor) });
+
+      // تحضير معارض الصور والفيديو
+      let imgsHTML = '';
+      if(item.images && item.images.length > 0 && item.images[0] !== '') {
+        imgsHTML = `<div class="gallery">` + item.images.map(img => `<img src="${img}" alt="صورة">`).join('') + `</div>`;
       }
 
-      data.forEach(item => {
-        // تجهيز معرض الصور
-        let imgsHTML = '';
-        if (item.images && item.images.length > 0) {
-          imgsHTML = `<div class="image-gallery">` + 
-            item.images.map(img => `<img src="${img}" alt="صورة العقار">`).join('') + 
-            `</div>`;
-        }
+      let videoHTML = item.video ? `<video src="${item.video}" controls style="width:100%; border-radius:4px; margin-top:5px;"></video>` : '';
+      let socialHTML = item.social ? `<a href="${item.social}" target="_blank" class="btn-social">🌐 زيارة صفحة التواصل الاجتماعي</a>` : '';
 
-        // تجهيز الفيديو
-        let videoHTML = item.video ? `<video src="${item.video}" controls></video>` : '';
+      // تجهيز رابط الواتساب والرسالة
+      const waNum = (item.whatsapp || '0949041251').replace(/[^0-9]/g, '');
+      const fullWaNum = waNum.startsWith('0') ? '963' + waNum.substring(1) : waNum;
+      const msg = encodeURIComponent(`مرحباً، أنا مهتم بعقار: (${item.title})\nرقم العقار: ${item.id}\nالموقع: ${item.address}\nالسعر: ${item.price}$`);
+      const waLink = `https://wa.me/${fullWaNum}?text=${msg}`;
 
-        // رابط التواصل الاجتماعي
-        let socialHTML = item.socialLink ? 
-          `<a href="${item.socialLink}" target="_blank" class="btn-social">🌐 زيارة صفحة التواصل الاجتماعي</a>` : '';
+      const popupHTML = `
+        <div class="popup-content">
+          <span class="badge">${item.type}</span> <span class="badge" style="background:#FFF3E0; color:#E65100;">#${item.id}</span>
+          <h4>${item.title}</h4>
+          <div>📍 <strong>الموقع:</strong> ${item.address}</div>
+          <div>📐 <strong>المساحة:</strong> ${item.area} م²</div>
+          <div>🛋️ <strong>التقسيم:</strong> ${item.layout || 'غير محدد'}</div>
+          <div>📜 <strong>الملكية:</strong> ${item.legal}</div>
+          <div style="font-size:15px; font-weight:bold; color:var(--brand-blue); margin-top:4px;">💰 <strong>السعر:</strong> ${item.price.toLocaleString()} $</div>
+          
+          ${imgsHTML}
+          ${videoHTML}
+          ${socialHTML}
 
-        // رابط الواتساب الجاهز مع تفاصيل العقار
-        const msg = encodeURIComponent(`مرحباً، أنا مهتم بعقار: (${item.title})\n📍 الموقع: ${item.street}\n💰 السعر: ${item.price}`);
-        const waLink = `https://wa.me/${item.whatsapp.replace(/[^0-9]/g, '')}?text=${msg}`;
+          <a href="${waLink}" target="_blank" class="btn-wa">💬 تواصل مباشرة عبر الواتساب (${item.whatsapp || '0949041251'})</a>
+        </div>
+      `;
 
-        listDiv.innerHTML += `
-          <div class="property-item">
-            <div>
-              <h3 style="margin:0 0 8px 0; color:var(--brand-blue);">${item.title}</h3>
-              <p style="margin:4px 0; font-size:14px; color:#5F6368;">📍 <strong>الموقع:</strong> ${item.street}</p>
-              <p style="margin:4px 0; font-size:16px; font-weight:bold; color:var(--brand-blue);">💰 <strong>السعر:</strong> ${item.price.toLocaleString()} $</p>
-              ${item.details ? `<p style="margin:8px 0; font-size:13px; color:#3C4043;">📝 ${item.details}</p>` : ''}
-              
-              ${imgsHTML}
-              ${videoHTML}
-            </div>
+      marker.bindPopup(popupHTML, { maxWidth: 280 });
+      markersGroup.addLayer(marker);
+    });
+  }
 
-            <div>
-              ${socialHTML}
-              <a href="${waLink}" target="_blank" class="btn-whatsapp">💬 تواصل مع المالك عبر الواتساب</a>
-            </div>
-          </div>
-        `;
-      });
-    }
+  function filterMap() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const selectedType = document.getElementById('typeFilter').value;
+    const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
 
-    function filterProperties() {
-      const searchText = document.getElementById('searchInput').value.toLowerCase();
-      const maxPrice = parseFloat(document.getElementById('maxPriceInput').value) || Infinity;
+    const filtered = allProperties.filter(item => {
+      const matchSearch = item.address.toLowerCase().includes(search) || item.title.toLowerCase().includes(search);
+      const matchType = selectedType === '' || item.type === selectedType;
+      const matchPrice = item.price <= maxPrice;
+      return matchSearch && matchType && matchPrice;
+    });
 
-      const filtered = properties.filter(item => {
-        const matchesStreet = item.street.toLowerCase().includes(searchText) || item.title.toLowerCase().includes(searchText);
-        const matchesPrice = item.price <= maxPrice;
-        return matchesStreet && matchesPrice;
-      });
+    renderMarkers(filtered);
+  }
 
-      displayProperties(filtered);
-    }
-  </script>
+  // تشغيل العرض الأولي
+  renderMarkers(allProperties);
+</script>
+
 </body>
 </html>
