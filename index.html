@@ -2,190 +2,201 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>Plan House - بلان هاوس | تصفح العقارات في سوريا</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bleni house - لوحة المالك</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
       --brand-blue: #0A2540;
       --brand-accent: #00D4B2;
+      --bg-light: #F8F9FA;
     }
-    body { margin: 0; padding: 0; font-family: 'Roboto', 'Segoe UI', Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; }
-    
-    .header {
-      background: var(--brand-blue);
-      color: white;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 3px solid var(--brand-accent);
-      z-index: 1000;
-    }
-
-    #map-container { flex: 1; position: relative; }
-    #map { width: 100%; height: 100%; }
-
-    /* شريط البحث والفلترة العائم */
-    .filter-box {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 12px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      width: 320px;
-      border: 1px solid #DADCE0;
-    }
-    .filter-box input, .filter-box select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 8px;
-      border: 1px solid #DADCE0;
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-size: 13px;
-    }
-
-    /* تخصيص النافذة المنبثقة */
-    .popup-content { font-size: 13px; line-height: 1.5; direction: rtl; text-align: right; }
-    .popup-content h4 { margin: 0 0 5px 0; color: var(--brand-blue); font-size: 15px; }
-    .badge { display: inline-block; padding: 2px 6px; background: #E8F0FE; color: #1A73E8; border-radius: 4px; font-weight: bold; font-size: 11px; }
-    .gallery { display: flex; gap: 5px; overflow-x: auto; margin: 8px 0; }
-    .gallery img { width: 100px; height: 70px; object-fit: cover; border-radius: 4px; }
-    .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 8px; border-radius: 4px; text-decoration: none; font-weight: bold; margin-top: 8px; }
-    .btn-social { display: block; background: var(--brand-blue); color: white; text-align: center; padding: 6px; border-radius: 4px; text-decoration: none; font-size: 11px; margin-top: 4px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-light); margin: 0; padding: 15px; color: #202124; }
+    .header { background: var(--brand-blue); color: white; padding: 15px 20px; border-radius: 8px; border-bottom: 4px solid var(--brand-accent); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    @media(max-width:768px){ .container { grid-template-columns: 1fr; } }
+    .card { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #DADCE0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .secret-card { background: #FFF8E1; border: 1px solid #FFE082; }
+    h3 { margin-top: 0; color: var(--brand-blue); border-bottom: 2px solid var(--brand-accent); padding-bottom: 5px; font-size: 15px; }
+    label { font-size: 12px; font-weight: bold; color: #3C4043; display: block; margin-top: 8px; }
+    input, select, textarea { width: 100%; padding: 8px; margin-top: 3px; border: 1px solid #DADCE0; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
+    #map { height: 350px; border-radius: 6px; border: 1px solid #DADCE0; margin-top: 8px; width: 100%; }
+    .btn-submit { background: var(--brand-blue); color: white; border: none; padding: 12px; border-radius: 4px; width: 100%; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 15px; border-bottom: 3px solid var(--brand-accent); }
+    .btn-submit:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <h2 style="margin:0; font-size:18px;">Plan House | بلان هاوس للعقارات</h2>
-  <a href="seller.html" style="background:var(--brand-accent); color:var(--brand-blue); padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">لوحة المالك</a>
+  <h2 style="margin:0; font-size:20px;">bleni house | بلان هاوس - لوحة التحكم (المالك)</h2>
+  <a href="index.html" style="color:var(--brand-accent); text-decoration:none; font-weight:bold;">الذهاب لواجهة المشتري ⬅️</a>
 </div>
 
-<div id="map-container">
-  <!-- شريط البحث والفلترة -->
-  <div class="filter-box">
-    <h4 style="margin:0 0 8px 0; color:var(--brand-blue);">🔍 البحث والتصفية</h4>
-    <input type="text" id="searchInput" onkeyup="filterMap()" placeholder="ابحث باسم الشارع، الحارة، أو المنطقة...">
-    <div style="display:flex; gap:5px;">
-      <select id="typeFilter" onchange="filterMap()">
-        <option value="">جميع أنواع العقارات</option>
+<form id="propertyForm" onsubmit="saveProperty(event)">
+  <div class="container">
+    
+    <!-- البيانات العامة -->
+    <div class="card">
+      <h3>البيانات العامة للعقار (تظهر للمشتري)</h3>
+      
+      <label>رقم العقار التعريفي:</label>
+      <input type="text" id="pId" required placeholder="مثال: SY-102">
+
+      <label>عنوان واسم العقار:</label>
+      <input type="text" id="pTitle" required placeholder="مثال: شقة سوبر ديلوكس في الشعلان">
+
+      <label>نوع العقار:</label>
+      <select id="pType" required>
         <option value="شقة">شقة</option>
-        <option value="بيت">بيت</option>
+        <option value="بيت">بيت / منزل</option>
         <option value="أرض">أرض</option>
         <option value="مشروع استثماري">مشروع استثماري</option>
         <option value="فيلا">فيلا</option>
         <option value="مزرعة">مزرعة</option>
       </select>
-      <input type="number" id="maxPrice" onkeyup="filterMap()" placeholder="حد أقصى للسعر">
-    </div>
-  </div>
 
-  <div id="map"></div>
-</div>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label>المساحة (م²):</label>
+          <input type="number" id="pArea" required placeholder="180">
+        </div>
+        <div style="flex:1;">
+          <label>السعر ($):</label>
+          <input type="number" id="pPrice" required placeholder="50000">
+        </div>
+      </div>
+
+      <label>تقسيمة العقار:</label>
+      <input type="text" id="pLayout" placeholder="مثال: 3 غرف نوم + صالون واسع + منافع">
+
+      <label>نوع الملكية / الطابو:</label>
+      <select id="pLegal">
+        <option value="طابو أخضر 2400 سهم">طابو أخضر 2400 سهم</option>
+        <option value="طابو زراعي">طابو زراعي</option>
+        <option value="حكم محكمة">حكم محكمة</option>
+        <option value="كتابة كاتب عدل">كتابة كاتب عدل</option>
+      </select>
+
+      <label>الموقع كتابة (الشارع والحارة):</label>
+      <input type="text" id="pAddress" required placeholder="مثال: دمشق - الصالحية - شارع الحمراء">
+
+      <label>رقم الواتساب الخاص بالاتصال بهذا العقار:</label>
+      <input type="text" id="pWhatsapp" value="0949041251" required>
+
+      <label>رابط التواصل الاجتماعي (اختياري):</label>
+      <input type="url" id="pSocial" placeholder="https://facebook.com/...">
+
+      <label>روابط الصور (ضع رابط كل صورة بمدخل منفصل بفاصلة):</label>
+      <textarea id="pImages" rows="2" placeholder="https://site.com/img1.jpg, https://site.com/img2.jpg"></textarea>
+
+      <label>رابط الفيديو (اختياري):</label>
+      <input type="url" id="pVideo" placeholder="https://site.com/video.mp4">
+    </div>
+
+    <!-- الخريطة والبيانات السرية -->
+    <div>
+      <div class="card">
+        <h3>تحديد موقع العقار على الخريطة (انقر لتثبيت الدبوس)</h3>
+        <div id="map"></div>
+        <input type="hidden" id="pLat" required>
+        <input type="hidden" id="pLng" required>
+        <p id="coordsText" style="font-size:11px; color:#5F6368; margin-top:5px;">انقر على الخريطة لتثبيت دبوس موقع العقار.</p>
+      </div>
+
+      <div class="card secret-card" style="margin-top:15px;">
+        <h3 style="color:#B71C1C; border-bottom-color:#D32F2F;">🔒 قسم البيانات السرية (خاص بالمالك فقط)</h3>
+        
+        <label>اسم صاحب العقار الأصلي:</label>
+        <input type="text" id="sOwnerName" placeholder="اسم المالك الحقيقي">
+
+        <label>رقم هاتف المالك الأصلي المباشر:</label>
+        <input type="text" id="sOwnerPhone" placeholder="09xxxxxxxx">
+
+        <label>المكتب الوسيط (إن وجد):</label>
+        <input type="text" id="sAgency" placeholder="اسم المكتب العقاري">
+
+        <label>نسبة العمولات / الربح الخاص بك ($):</label>
+        <input type="text" id="sMargin" placeholder="مثال: 2000$ أو 2.5%">
+      </div>
+
+      <button type="submit" class="btn-submit">💾 حفظ ونشر العقار على الخريطة</button>
+    </div>
+
+  </div>
+</form>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // تقييد حدود الخريطة بسوريا فقط
-  const syriaBounds = Leaflet.latLngBounds([32.3, 35.6], [37.3, 42.4]);
-  const map = L.map('map', { maxBounds: syriaBounds, maxBoundsViscosity: 1.0 }).setView([33.5138, 36.2765], 12);
+  // تقييد الخريطة بالنطاق السوري حصراً لسرعة التحميل
+  const syriaBounds = L.latLngBounds([32.3, 35.6], [37.3, 42.4]);
+  const map = L.map('map', { maxBounds: syriaBounds, maxBoundsViscosity: 1.0 }).setView([33.5138, 36.2765], 13);
 
-  // طبقة خرائط Google Hybrid
+  // تحميل سيرفر خرائط جوجل الهجين Satellite المباشر لتفادي الشاشة البيضاء
   L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
     maxZoom: 20,
-    attribution: 'Google Maps | Plan House'
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: 'Google Maps | bleni house'
   }).addTo(map);
 
-  // تعريف ألوان الدبابيس المخصصة حسب النوع
-  const pinColors = {
-    'شقة': '#1E88E5',        // أزرق
-    'بيت': '#43A047',        // أخضر
-    'أرض': '#8D6E63',        // بني
-    'مشروع استثماري': '#8E24AA',// بنفسجي
-    'فيلا': '#FDD835',       // أصفر
-    'مزرعة': '#2E7D32'       // أخضر غامق
-  };
+  let selectedMarker = null;
 
-  function createCustomIcon(color) {
-    const markerHtml = `<div style="background-color:${color}; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>`;
-    return L.divIcon({
-      className: 'custom-pin',
-      html: markerHtml,
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
-    });
+  map.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    document.getElementById('pLat').value = lat;
+    document.getElementById('pLng').value = lng;
+    document.getElementById('coordsText').innerText = `تم تحديد الإحداثيات: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+    if (selectedMarker) map.removeLayer(selectedMarker);
+    selectedMarker = L.marker([lat, lng]).addTo(map);
+  });
+
+  function saveProperty(e) {
+    e.preventDefault();
+
+    const lat = document.getElementById('pLat').value;
+    const lng = document.getElementById('pLng').value;
+
+    if (!lat || !lng) {
+      alert("يرجى النقر على الخريطة لتحديد موقع العقار بدقة!");
+      return;
+    }
+
+    const imagesInput = document.getElementById('pImages').value;
+    const imagesArray = imagesInput ? imagesInput.split(',').map(s => s.trim()) : [];
+
+    const newProperty = {
+      id: document.getElementById('pId').value,
+      title: document.getElementById('pTitle').value,
+      type: document.getElementById('pType').value,
+      area: document.getElementById('pArea').value,
+      price: parseFloat(document.getElementById('pPrice').value),
+      layout: document.getElementById('pLayout').value,
+      legal: document.getElementById('pLegal').value,
+      address: document.getElementById('pAddress').value,
+      whatsapp: document.getElementById('pWhatsapp').value,
+      social: document.getElementById('pSocial').value,
+      images: imagesArray,
+      video: document.getElementById('pVideo').value,
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+      // بيانات سرية
+      secretOwnerName: document.getElementById('sOwnerName').value,
+      secretOwnerPhone: document.getElementById('sOwnerPhone').value,
+      secretAgency: document.getElementById('sAgency').value,
+      secretMargin: document.getElementById('sMargin').value
+    };
+
+    let properties = JSON.parse(localStorage.getItem('bleni_house_db')) || [];
+    properties.push(newProperty);
+    localStorage.setItem('bleni_house_db', JSON.stringify(properties));
+
+    alert("تم حفظ العقار بنجاح وسيظهر فوراً في واجهة المشتري على الخريطة!");
+    document.getElementById('propertyForm').reset();
+    if (selectedMarker) map.removeLayer(selectedMarker);
+    document.getElementById('coordsText').innerText = "انقر على الخريطة لتثبيت دبوس موقع العقار.";
   }
-
-  let allProperties = JSON.parse(localStorage.getItem('plan_house_db')) || [];
-  let markersGroup = L.layerGroup().addTo(map);
-
-  function renderMarkers(data) {
-    markersGroup.clearLayers();
-
-    data.forEach(item => {
-      if(!item.lat || !item.lng) return;
-
-      const pinColor = pinColors[item.type] || '#E53935';
-      const marker = L.marker([item.lat, item.lng], { icon: createCustomIcon(pinColor) });
-
-      // تحضير معارض الصور والفيديو
-      let imgsHTML = '';
-      if(item.images && item.images.length > 0 && item.images[0] !== '') {
-        imgsHTML = `<div class="gallery">` + item.images.map(img => `<img src="${img}" alt="صورة">`).join('') + `</div>`;
-      }
-
-      let videoHTML = item.video ? `<video src="${item.video}" controls style="width:100%; border-radius:4px; margin-top:5px;"></video>` : '';
-      let socialHTML = item.social ? `<a href="${item.social}" target="_blank" class="btn-social">🌐 زيارة صفحة التواصل الاجتماعي</a>` : '';
-
-      // تجهيز رابط الواتساب والرسالة
-      const waNum = (item.whatsapp || '0949041251').replace(/[^0-9]/g, '');
-      const fullWaNum = waNum.startsWith('0') ? '963' + waNum.substring(1) : waNum;
-      const msg = encodeURIComponent(`مرحباً، أنا مهتم بعقار: (${item.title})\nرقم العقار: ${item.id}\nالموقع: ${item.address}\nالسعر: ${item.price}$`);
-      const waLink = `https://wa.me/${fullWaNum}?text=${msg}`;
-
-      const popupHTML = `
-        <div class="popup-content">
-          <span class="badge">${item.type}</span> <span class="badge" style="background:#FFF3E0; color:#E65100;">#${item.id}</span>
-          <h4>${item.title}</h4>
-          <div>📍 <strong>الموقع:</strong> ${item.address}</div>
-          <div>📐 <strong>المساحة:</strong> ${item.area} م²</div>
-          <div>🛋️ <strong>التقسيم:</strong> ${item.layout || 'غير محدد'}</div>
-          <div>📜 <strong>الملكية:</strong> ${item.legal}</div>
-          <div style="font-size:15px; font-weight:bold; color:var(--brand-blue); margin-top:4px;">💰 <strong>السعر:</strong> ${item.price.toLocaleString()} $</div>
-          
-          ${imgsHTML}
-          ${videoHTML}
-          ${socialHTML}
-
-          <a href="${waLink}" target="_blank" class="btn-wa">💬 تواصل مباشرة عبر الواتساب (${item.whatsapp || '0949041251'})</a>
-        </div>
-      `;
-
-      marker.bindPopup(popupHTML, { maxWidth: 280 });
-      markersGroup.addLayer(marker);
-    });
-  }
-
-  function filterMap() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const selectedType = document.getElementById('typeFilter').value;
-    const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
-
-    const filtered = allProperties.filter(item => {
-      const matchSearch = item.address.toLowerCase().includes(search) || item.title.toLowerCase().includes(search);
-      const matchType = selectedType === '' || item.type === selectedType;
-      const matchPrice = item.price <= maxPrice;
-      return matchSearch && matchType && matchPrice;
-    });
-
-    renderMarkers(filtered);
-  }
-
-  // تشغيل العرض الأولي
-  renderMarkers(allProperties);
 </script>
 
 </body>
