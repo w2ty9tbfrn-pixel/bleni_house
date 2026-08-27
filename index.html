@@ -4,19 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>bleni house - بلان هاوس | عقارات سوريا</title>
-  
-  <!-- مكتبة الخرائط Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
       --brand-blue: #0A2540;
       --brand-accent: #00D4B2;
     }
     * { box-sizing: border-box; }
-    body, html { margin: 0; padding: 0; height: 100%; font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif; }
+    body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; }
     
-    .header {
+    .navbar {
       background: var(--brand-blue);
       color: white;
       padding: 12px 20px;
@@ -26,137 +23,155 @@
       border-bottom: 3px solid var(--brand-accent);
       z-index: 1000;
       position: relative;
+      height: 60px;
     }
 
-    #map-wrapper { position: relative; width: 100%; height: calc(100vh - 55px); background: #e5e3df; }
+    .brand-title { margin: 0; font-size: 19px; cursor: pointer; user-select: none; }
+    #map-wrapper { position: relative; width: 100%; height: calc(100vh - 60px); background: #e5e3df; }
     #map { width: 100%; height: 100%; z-index: 1; }
 
-    /* شريط البحث والفلترة العائم */
-    .filter-box {
+    .top-search-bar {
       position: absolute;
       top: 15px;
-      right: 15px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1000;
-      background: rgba(255, 255, 255, 0.98);
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      width: 320px;
-      border: 1px solid #DADCE0;
+      background: rgba(10, 37, 64, 0.92);
+      backdrop-filter: blur(8px);
+      padding: 10px 15px;
+      border-radius: 30px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.2);
+      max-width: 90%;
+      width: 800px;
     }
-    .filter-box h4 { margin: 0 0 10px 0; color: var(--brand-blue); font-size: 15px; }
-    .filter-box input, .filter-box select {
-      width: 100%;
-      padding: 9px;
-      margin-bottom: 8px;
-      border: 1px solid #DADCE0;
-      border-radius: 4px;
+
+    .top-search-bar input, .top-search-bar select {
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: 1px solid #FFF;
+      outline: none;
       font-size: 13px;
+      background: #FFF;
     }
-    .btn-filter {
-      width: 100%;
-      background: var(--brand-blue);
-      color: white;
+    .top-search-bar input[type="text"] { flex: 2; }
+    .top-search-bar select { flex: 1.2; }
+    .top-search-bar input[type="number"] { flex: 1.2; }
+
+    .btn-search {
+      background: var(--brand-accent);
+      color: var(--brand-blue);
       border: none;
-      padding: 10px;
-      border-radius: 4px;
+      padding: 8px 18px;
+      border-radius: 20px;
       font-weight: bold;
       cursor: pointer;
-      border-bottom: 2px solid var(--brand-accent);
-      transition: background 0.2s;
+      font-size: 13px;
     }
-    .btn-filter:hover { background: #12385c; }
 
-    /* تخصيص النافذة المنبثقة من الخريطة */
-    .leaflet-popup-content-wrapper { border-radius: 8px; padding: 5px; }
     .popup-content { font-size: 13px; line-height: 1.5; direction: rtl; text-align: right; }
     .popup-content h4 { margin: 0 0 6px 0; color: var(--brand-blue); font-size: 15px; }
     .badge { display: inline-block; padding: 2px 6px; background: #E8F0FE; color: #1A73E8; border-radius: 4px; font-weight: bold; font-size: 11px; }
-    .gallery { display: flex; gap: 5px; overflow-x: auto; margin: 8px 0; }
-    .gallery img { width: 100px; height: 75px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
-    .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 8px; border-radius: 4px; text-decoration: none; font-weight: bold; margin-top: 10px; }
-    .btn-social { display: block; background: var(--brand-blue); color: white; text-align: center; padding: 6px; border-radius: 4px; text-decoration: none; font-size: 11px; margin-top: 5px; }
+    .cover-img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin: 8px 0; border: 1px solid #DDD; }
+    .gallery { display: flex; gap: 5px; overflow-x: auto; margin: 6px 0; }
+    .gallery img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #DDD; }
+    .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 9px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px; }
+    .btn-video-link { display: inline-block; color: #1A73E8; text-decoration: underline; font-size: 12px; margin-top: 4px; font-weight: bold; }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <h2 style="margin:0; font-size:18px;">bleni house | بلان هاوس</h2>
-  <a href="seller.html" style="background:var(--brand-accent); color:var(--brand-blue); padding:6px 14px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">لوحة المالك ⚙️</a>
+<div class="navbar">
+  <h2 class="brand-title" onclick="checkOwnerSecretAccess()">bleni house | بلان هاوس</h2>
 </div>
 
 <div id="map-wrapper">
-  <!-- صندوق البحث والفلترة مع زر التطبيق -->
-  <div class="filter-box">
-    <h4>🔍 البحث والفلترة</h4>
-    <input type="text" id="searchInput" placeholder="ابحث باسم الشارع، الحارة، أو المنطقة...">
-    
+  <div class="top-search-bar">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث بالشارع، الحارة، أو المنطقة...">
     <select id="typeFilter">
-      <option value="">جميع أنواع العقارات</option>
-      <option value="شقة">شقة</option>
-      <option value="بيت">بيت / منزل</option>
-      <option value="أرض">أرض</option>
-      <option value="مشروع استثماري">مشروع استثماري</option>
-      <option value="فيلا">فيلا</option>
-      <option value="مزرعة">مزرعة</option>
+      <option value="">كل العقارات</option>
+      <option value="شقة">🏢 شقة</option>
+      <option value="بيت">🏠 بيت</option>
+      <option value="أرض">🧱 أرض</option>
+      <option value="مشروع استثماري">🏢 مشروع</option>
+      <option value="فيلا">🏰 فيلا</option>
+      <option value="مزرعة">🌾 مزرعة</option>
     </select>
-
-    <input type="number" id="maxPrice" placeholder="حدد السعر الأقصى ($)">
-    
-    <button class="btn-filter" onclick="applyFilter()">🔍 تطبيق البحث</button>
+    <input type="number" id="targetPrice" placeholder="السعر ($)">
+    <button class="btn-search" onclick="applyFilter()">بحث 🔍</button>
   </div>
-
   <div id="map"></div>
 </div>
 
-<!-- مكتبة الخرائط Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // 1. تحديد حدود جغرافية سوريا فقط لمنع الخروج منها وتسريع التحميل
-  const syriaBounds = L.latLngBounds(
-    [32.3000, 35.6000], // الحدود الجنوب الغربية
-    [37.3000, 42.4000]  // الحدود الشمال الشرقية
-  );
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
 
-  // 2. تهيئة الخريطة
-  const map = L.map('map', {
-    maxBounds: syriaBounds,
-    maxBoundsViscosity: 1.0,
-    minZoom: 7,
-    maxZoom: 19
-  }).setView([33.5138, 36.2765], 13); // التركيز على دمشق افتراضياً
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  // 3. إضافة طبقة خرائط Google Hybrid (صور أسطح المباني + أسامي الشوارع والمدن)
+  const OWNER_PASSCODE = "123456";
+  let clickCounter = 0;
+  let clickTimer = null;
+
+  function checkOwnerSecretAccess() {
+    clickCounter++;
+    clearTimeout(clickTimer);
+    if (clickCounter === 3) {
+      clickCounter = 0;
+      const pass = prompt("🔐 أدخل كلمة السر الخاصة بلوحة المالك:");
+      if (pass === OWNER_PASSCODE) window.location.href = "seller.html";
+      else if (pass !== null) alert("❌ كلمة السر خاطئة!");
+    } else {
+      clickTimer = setTimeout(() => { clickCounter = 0; }, 1000);
+    }
+  }
+
+  const syriaBounds = L.latLngBounds([32.3000, 35.6000], [37.3000, 42.4000]);
+  const map = L.map('map', { maxBounds: syriaBounds, maxBoundsViscosity: 1.0, minZoom: 7, maxZoom: 19 }).setView([33.5138, 36.2765], 13);
+
   L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
     maxZoom: 20,
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     attribution: 'Google Maps | bleni house'
   }).addTo(map);
 
-  // 4. ألوان الأيقونات حسب نوع العقار
   const pinColors = {
-    'شقة': '#1E88E5',        // أزرق
-    'بيت': '#43A047',        // أخضر
-    'أرض': '#8D6E63',        // بني
-    'مشروع استثماري': '#8E24AA',// بنفسجي
-    'فيلا': '#FDD835',       // أصفر
-    'مزرعة': '#2E7D32'       // أخضر غامق
+    'شقة': '#1E88E5', 'بيت': '#43A047', 'أرض': '#8D6E63',
+    'مشروع استثماري': '#8E24AA', 'فيلا': '#FDD835', 'مزرعة': '#2E7D32'
   };
 
   function createCustomIcon(color) {
     return L.divIcon({
       className: 'custom-pin',
-      html: `<div style="background-color:${color}; width:20px; height:20px; border-radius:50%; border:3px solid #ffffff; box-shadow:0 0 5px rgba(0,0,0,0.4);"></div>`,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10]
+      html: `<div style="background-color:${color}; width:22px; height:22px; border-radius:50%; border:3px solid #ffffff; box-shadow:0 0 6px rgba(0,0,0,0.5);"></div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
     });
   }
 
-  let allProperties = JSON.parse(localStorage.getItem('plan_house_db')) || [];
   let markersGroup = L.layerGroup().addTo(map);
+  let currentProperties = [];
 
-  // 5. دالة رسم الدبابيس على الخريطة
+  db.collection("public_properties").onSnapshot((snapshot) => {
+    currentProperties = [];
+    snapshot.forEach(doc => currentProperties.push(doc.data()));
+    renderMarkers(currentProperties);
+  });
+
   function renderMarkers(data) {
     markersGroup.clearLayers();
 
@@ -166,23 +181,19 @@
       const pinColor = pinColors[item.type] || '#E53935';
       const marker = L.marker([item.lat, item.lng], { icon: createCustomIcon(pinColor) });
 
-      // معرض الصور
-      let imgsHTML = '';
-      if (item.images && item.images.length > 0 && item.images[0] !== '') {
-        imgsHTML = `<div class="gallery">` + item.images.map(img => `<img src="${img}" alt="صورة العقار">`).join('') + `</div>`;
-      }
+      let mainImgHTML = item.images && item.images.length > 0 ? `<img src="${item.images[0]}" class="cover-img">` : '';
+      let subImgsHTML = item.images && item.images.length > 1 ? `<div class="gallery">` + item.images.slice(1).map(img => `<img src="${img}">`).join('') + `</div>` : '';
 
-      let videoHTML = item.video ? `<video src="${item.video}" controls style="width:100%; border-radius:4px; margin-top:5px;"></video>` : '';
-      let socialHTML = item.social ? `<a href="${item.social}" target="_blank" class="btn-social">🌐 زيارة صفحة العقار</a>` : '';
+      let videoHTML = item.videoFile ? `<div style="margin-top:8px;">🎬 <strong>فيديو العقار:</strong><video src="${item.videoFile}" controls style="width:100%; border-radius:4px; margin-top:4px;"></video></div>` : '';
+      let videoLinkHTML = item.videoUrl ? `<div>🔗 <a href="${item.videoUrl}" target="_blank" class="btn-video-link">مشاهدة فيديو العقار عبر رابط خارجي 🎬</a></div>` : '';
 
-      // تجهيز رابط الواتساب والرسالة التلقائية
       const waNum = (item.whatsapp || '0949041251').replace(/[^0-9]/g, '');
       const fullWaNum = waNum.startsWith('0') ? '963' + waNum.substring(1) : waNum;
       const msg = encodeURIComponent(`مرحباً بلان هاوس، أنا مهتم بعقار: (${item.title})\nرقم العقار: ${item.id}\nالموقع: ${item.address}\nالسعر: ${item.price}$`);
-      const waLink = `https://wa.me/${fullWaNum}?text=${msg}`;
 
       const popupHTML = `
         <div class="popup-content">
+          ${mainImgHTML}
           <span class="badge">${item.type}</span> <span class="badge" style="background:#FFF3E0; color:#E65100;">#${item.id}</span>
           <h4>${item.title}</h4>
           <div>📍 <strong>الموقع:</strong> ${item.address}</div>
@@ -191,38 +202,33 @@
           <div>📜 <strong>الملكية:</strong> ${item.legal}</div>
           <div style="font-size:14px; font-weight:bold; color:var(--brand-blue); margin-top:5px;">💰 <strong>السعر:</strong> ${Number(item.price).toLocaleString()} $</div>
           
-          ${imgsHTML}
+          ${subImgsHTML}
           ${videoHTML}
-          ${socialHTML}
+          ${videoLinkHTML}
 
-          <a href="${waLink}" target="_blank" class="btn-wa">💬 تواصل عبر الواتساب (${item.whatsapp || '0949041251'})</a>
+          <a href="https://wa.me/${fullWaNum}?text=${msg}" target="_blank" class="btn-wa">💬 تواصل عبر الواتساب (${item.whatsapp || '0949041251'})</a>
         </div>
       `;
 
-      marker.bindPopup(popupHTML, { maxWidth: 280 });
+      marker.bindPopup(popupHTML, { maxWidth: 290 });
       markersGroup.addLayer(marker);
     });
   }
 
-  // 6. دالة الفلترة بالضغط على الزر
   function applyFilter() {
     const search = document.getElementById('searchInput').value.trim().toLowerCase();
     const selectedType = document.getElementById('typeFilter').value;
-    const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+    const targetPriceVal = parseFloat(document.getElementById('targetPrice').value);
 
-    const filtered = allProperties.filter(item => {
+    const filtered = currentProperties.filter(item => {
       const matchSearch = search === '' || item.address.toLowerCase().includes(search) || item.title.toLowerCase().includes(search);
       const matchType = selectedType === '' || item.type === selectedType;
-      const matchPrice = item.price <= maxPrice;
+      let matchPrice = isNaN(targetPriceVal) || (item.price >= targetPriceVal - 10000 && item.price <= targetPriceVal + 10000);
       return matchSearch && matchType && matchPrice;
     });
 
     renderMarkers(filtered);
   }
-
-  // العرض المباشر عند فتح الصفحة
-  renderMarkers(allProperties);
 </script>
-
 </body>
 </html>
