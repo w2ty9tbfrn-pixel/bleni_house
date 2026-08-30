@@ -249,8 +249,9 @@
             currentMarker = L.marker([lat, lng]).addTo(mapPicker);
         });
 
+        // تم ربط رابط قاعدة البيانات الخاص بك هنا تلقائياً
         const firebaseConfig = {
-            databaseURL: "YOUR_FIREBASE_DATABASE_URL"
+            databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
         
         if (!firebase.apps.length) {
@@ -308,7 +309,7 @@
             const newRef = database.ref('properties').push();
             newRef.set(newProperty).then(() => {
                 database.ref('secret_properties/' + newRef.key).set(secretData);
-                alert("✅ تم رفع الصورة والفيديو وحفظ العقار بنجاح!");
+                alert("✅ تم رفع الصورة والفيديو وحفظ العقار بنجاح في السحاب!");
                 document.getElementById('property-form').reset();
                 document.getElementById('whatsappNumber').value = "963949041251";
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
