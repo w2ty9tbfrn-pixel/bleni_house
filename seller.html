@@ -445,6 +445,15 @@
                 currentMarker = L.marker([prop.lat, prop.lng]).addTo(mapPicker);
             }
 
+            // جلب البيانات السرية المرتبطة بهذا العقار إن وجدت
+            database.ref('secret_properties/' + key).once('value').then(secSnap => {
+                const sec = secSnap.val() || {};
+                document.getElementById('ownerName').value = sec.ownerName || '';
+                document.getElementById('ownerPhone').value = sec.ownerPhone || '';
+                document.getElementById('photographer').value = sec.photographer || '';
+                document.getElementById('commission').value = sec.commission || '';
+            });
+
             document.getElementById('formTitleText').innerText = "2. تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
             document.getElementById('submitBtn').innerText = "تحديث العقار الآن 🔄";
             document.getElementById('cancelEditBtn').style.display = 'block';
@@ -469,8 +478,10 @@
             if (confirm("هل أنت متأكد من رغبتك في حذف هذا العقار نهائياً؟")) {
                 database.ref('properties/' + key).remove()
                 .then(() => {
-                    database.ref('secret_properties/' + key).remove();
-                    alert("🗑️ تم حذف العقار بنجاح!");
+                    return database.ref('secret_properties/' + key).remove();
+                })
+                .then(() => {
+                    alert("🗑️ تم حذف العقار بنجاح من النظام والمشتري!");
                 })
                 .catch(err => alert("خطأ بالحذف: " + err.message));
             }
@@ -524,19 +535,16 @@
                 commission: document.getElementById('commission').value
             };
 
-            if (editKey) {
-                Promise.all([
-                    database.ref('properties/' + editKey).update(propertyData),
-                    database.ref('secret_properties/' + editKey).update(secretData)
-                ]).then(() => {
-                    alert("✨ تم تحديث العقار بنجاح!");
+            try {
+                if (editKey) {
+                    await database.ref('properties/' + editKey).update(propertyData);
+                    await database.ref('secret_properties/' + editKey).update(secretData);
+                    alert("✨ تم تحديث العقار ونشره للمشترين بنجاح!");
                     cancelEdit();
-                }).catch(err => alert("خطأ بالتحديث: " + err.message));
-
-            } else {
-                const newRef = database.ref('properties').push();
-                newRef.set(propertyData).then(() => {
-                    database.ref('secret_properties/' + newRef.key).set(secretData);
+                } else {
+                    const newRef = database.ref('properties').push();
+                    await newRef.set(propertyData);
+                    await database.ref('secret_properties/' + newRef.key).set(secretData);
                     alert("✅ تم حفظ ونشر العقار بنجاح في السحاب!");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
@@ -544,7 +552,9 @@
                         mapPicker.removeLayer(currentMarker);
                         currentMarker = null;
                     }
-                }).catch(err => alert("خطأ بالحفظ: " + err.message));
+                }
+            } catch (err) {
+                alert("حدث خطأ أثناء الحفظ: " + err.message);
             }
         });
     </script>
