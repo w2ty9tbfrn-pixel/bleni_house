@@ -99,7 +99,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
-        /* مربع أنواع العقارات مصغر ومرتب ليحتمل الخيارات الجديدة */
         .map-legend {
             position: fixed;
             bottom: 15px;
@@ -378,7 +377,6 @@
         <video id="activeVideoPlayer" controls autoplay></video>
     </div>
 
-    <!-- مفتاح الخريطة المحدث ليشمل أنواع الشقق بدقة -->
     <div class="map-legend">
         <div class="legend-title">أنواع العقارات</div>
         <div class="legend-item"><span class="legend-color" style="background: #00bfff;"></span> شقة عادية</div>
@@ -398,12 +396,14 @@
     <script>
         const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
 
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
-        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.85 }).addTo(map);
+        // استخدام طبقة الخريطة القياسية المفصلة (تظهر أسماء الشوارع، المدن، والمناطق بوضوح مثل خرائط جوجل)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
-        // تخصيص الألوان لكل نوع شقة أو عقار
         const pinColors = {
             'شقة عادية': '#00bfff',
             'شقة سوبر ديلوكس': '#007bff',
