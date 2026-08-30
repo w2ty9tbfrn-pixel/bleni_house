@@ -100,7 +100,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
-        /* تصغير مربع أنواع العقارات */
+        /* مربع أنواع العقارات مصغر */
         .map-legend {
             position: fixed;
             bottom: 15px;
@@ -141,88 +141,110 @@
             flex-shrink: 0;
         }
 
-        /* تصميم البطاقة المنبثقة */
+        /* تصميم البطاقة المنبثقة المطابقة للصورة تماماً */
         .leaflet-popup-content-wrapper {
             padding: 0;
-            border-radius: 12px;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border: 1px solid var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            border: 1.5px solid var(--accent-gold);
         }
 
         .leaflet-popup-content {
             margin: 0;
-            width: 280px !important;
+            width: 300px !important;
         }
 
         .popup-card {
             direction: rtl;
             text-align: right;
             background: #ffffff;
+            padding-bottom: 10px;
         }
 
-        .popup-header {
-            background: var(--primary-green);
-            color: #ffffff;
-            padding: 10px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--accent-gold);
+        .popup-media-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: #000;
         }
 
-        .popup-header .title {
-            font-size: 0.95rem;
+        .popup-media-container img, .popup-media-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-request-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: var(--primary-green);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
             font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
-        .popup-header .price-tag {
-            background: var(--accent-gold);
-            color: #ffffff;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .popup-body {
+        .popup-details {
             padding: 12px;
         }
 
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 10px;
-            background: #f8f9fa;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #eee;
-        }
-
-        .info-item {
-            font-size: 0.75rem;
-            color: var(--text-dark);
-        }
-
-        .info-item b {
+        .popup-price {
+            font-size: 1.15rem;
+            font-weight: bold;
             color: var(--primary-green);
+            margin-bottom: 4px;
         }
 
-        .media-gallery {
+        .popup-location {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .property-lines {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            margin-top: 8px;
-            max-height: 200px;
-            overflow-y: auto;
+            gap: 5px;
+            font-size: 0.82rem;
+            color: var(--text-dark);
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+            margin-bottom: 10px;
         }
 
-        .media-gallery img, .media-gallery video {
-            width: 100%;
+        .property-line-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .property-line-item span:first-child {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .property-line-item span:last-child {
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        .popup-notes {
+            font-size: 0.78rem;
+            background: #f9f9f9;
+            padding: 6px 8px;
             border-radius: 6px;
-            object-fit: cover;
-            border: 1px solid #ddd;
+            color: #444;
+            margin-bottom: 10px;
+            border-right: 3px solid var(--accent-gold);
         }
 
         .whatsapp-btn {
@@ -234,12 +256,11 @@
             background-color: #25D366;
             color: white;
             text-align: center;
-            padding: 9px 0;
+            padding: 10px 0;
             border-radius: 8px;
             text-decoration: none;
             font-weight: bold;
             font-size: 0.85rem;
-            margin-top: 10px;
             box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
     </style>
@@ -309,7 +330,6 @@
             });
         }
 
-        // تم ربط رابط قاعدة البيانات الخاص بك هنا تلقائياً
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
@@ -322,29 +342,35 @@
         database.ref('properties').on('child_added', (snapshot) => {
             const data = snapshot.val();
             if (data && data.lat && data.lng) {
-                let mediaContent = '';
+                let mediaHTML = '';
                 if (data.image) {
-                    mediaContent += `<img src="${data.image}" alt="صورة العقار" />`;
-                }
-                if (data.video) {
-                    mediaContent += `<video src="${data.video}" controls></video>`;
+                    mediaHTML = `<img src="${data.image}" alt="صورة العقار" />`;
+                } else {
+                    mediaHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;background:#333;font-size:0.8rem;">لا توجد صورة</div>`;
                 }
 
                 const phoneNum = data.whatsappNumber || '963949041251';
 
                 const popupContent = `
                     <div class="popup-card">
-                        <div class="popup-header">
-                            <span class="title">عقار رقم ${data.propertyId || ''}</span>
-                            <span class="price-tag">${data.price}</span>
+                        <div class="popup-media-container">
+                            ${mediaHTML}
+                            <a href="https://wa.me/${phoneNum}?text=أريد%2520رؤية%2520فيديو%2520العقار%2520رقم%2520${data.propertyId}" target="_blank" class="video-request-btn">اطلب فيديو 🎥</a>
                         </div>
-                        <div class="popup-body">
-                            <div class="info-grid">
-                                <div class="info-item"><b>النوع:</b> ${data.type}</div>
-                                <div class="info-item"><b>المساحة:</b> ${data.area} م²</div>
-                                <div class="info-item" style="grid-column: span 2;"><b>التقسيم:</b> ${data.layout}</div>
+                        <div class="popup-details">
+                            <div class="popup-price">${data.price}</div>
+                            <div class="popup-location">📍 ${data.location || 'الموقع غير محدد'}</div>
+                            
+                            <div class="property-lines">
+                                <div class="property-line-item"><span>نوع العقار:</span> <span>${data.type}</span></div>
+                                <div class="property-line-item"><span>المساحة:</span> <span>${data.area} م²</span></div>
+                                <div class="property-line-item"><span>التقسيم:</span> <span>${data.layout}</span></div>
+                                <div class="property-line-item"><span>السند القانوني:</span> <span>${data.legalStatus || 'غير محدد'}</span></div>
+                                <div class="property-line-item"><span>حالة السعر:</span> <span>${data.bazarStatus || 'غير محدد'}</span></div>
                             </div>
-                            ${mediaContent ? `<div class="media-gallery">${mediaContent}</div>` : ''}
+
+                            ${data.notes ? `<div class="popup-notes"><b>ملاحظة:</b> ${data.notes}</div>` : ''}
+
                             <a href="https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}" target="_blank" class="whatsapp-btn">
                                 تواصل عبر الواتساب
                             </a>
@@ -352,9 +378,17 @@
                     </div>
                 `;
 
-                L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type) })
+                const marker = L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type) })
                     .addTo(map)
                     .bindPopup(popupContent);
+
+                // ميزة سحب وتوسيط الخريطة تلقائياً عند الضغط على الأيقونة ليصبح العقار في المنتصف تماماً
+                marker.on('click', function() {
+                    map.setView([data.lat, data.lng], map.getZoom(), {
+                        animate: true,
+                        duration: 0.6
+                    });
+                });
             }
         });
     </script>
