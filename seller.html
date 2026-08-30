@@ -342,7 +342,8 @@
         function initPickerMap() {
             mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
-            L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+            // استخدام الأقمار الصناعية النقية بدون أي تسميات أو دبابيس خارجية
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; Google Maps'
