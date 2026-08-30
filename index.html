@@ -141,85 +141,125 @@
             flex-shrink: 0;
         }
 
-        /* تصميم البطاقة المنبثقة المطابقة للصورة تماماً */
-        .leaflet-popup-content-wrapper {
-            padding: 0;
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-            border: 1.5px solid var(--accent-gold);
+        /* النافذة المركزية العائمة (Modal) لتفاصيل العقار */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 15px;
+            backdrop-filter: blur(3px);
         }
 
-        .leaflet-popup-content {
-            margin: 0;
-            width: 300px !important;
-        }
-
-        .popup-card {
+        .modal-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 380px;
+            max-height: 90vh;
+            border-radius: 16px;
+            overflow-y: auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border: 2px solid var(--accent-gold);
             direction: rtl;
             text-align: right;
-            background: #ffffff;
-            padding-bottom: 10px;
+            position: relative;
+            animation: modalPop 0.3s ease-out;
         }
 
-        .popup-media-container {
+        @keyframes modalPop {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-media-container {
             position: relative;
             width: 100%;
-            height: 180px;
+            height: 200px;
             background: #000;
         }
 
-        .popup-media-container img, .popup-media-container video {
+        .modal-media-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
+        /* زر طلب الفيديو بلون بارز وجذاب جداً */
         .video-request-btn {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background-color: var(--primary-green);
-            color: var(--accent-gold);
-            border: 1px solid var(--accent-gold);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            bottom: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
             font-weight: bold;
-            text-decoration: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 65, 108, 0.4);
+            transition: transform 0.2s;
         }
 
-        .popup-details {
-            padding: 12px;
+        .video-request-btn:active {
+            transform: scale(0.95);
+        }
+
+        .modal-details {
+            padding: 15px;
         }
 
         .popup-price {
-            font-size: 1.15rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: var(--primary-green);
             margin-bottom: 4px;
         }
 
         .popup-location {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 4px;
+            font-weight: 600;
         }
 
         .property-lines {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            font-size: 0.82rem;
+            gap: 7px;
+            font-size: 0.88rem;
             color: var(--text-dark);
             border-top: 1px solid #eee;
             border-bottom: 1px solid #eee;
-            padding: 8px 0;
-            margin-bottom: 10px;
+            padding: 10px 0;
+            margin-bottom: 12px;
         }
 
         .property-line-item {
@@ -228,7 +268,7 @@
         }
 
         .property-line-item span:first-child {
-            color: #555;
+            color: #666;
             font-weight: 600;
         }
 
@@ -238,12 +278,12 @@
         }
 
         .popup-notes {
-            font-size: 0.78rem;
+            font-size: 0.82rem;
             background: #f9f9f9;
-            padding: 6px 8px;
-            border-radius: 6px;
+            padding: 8px 10px;
+            border-radius: 8px;
             color: #444;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border-right: 3px solid var(--accent-gold);
         }
 
@@ -251,17 +291,48 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             width: 100%;
             background-color: #25D366;
             color: white;
             text-align: center;
-            padding: 10px 0;
+            padding: 12px 0;
             border-radius: 8px;
             text-decoration: none;
             font-weight: bold;
-            font-size: 0.85rem;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        /* نافذة مشغل الفيديو المنبثقة عند الطلب */
+        .video-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+        .video-modal video {
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            border-radius: 10px;
+        }
+        .close-video {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+            background: none;
+            border: none;
         }
     </style>
 </head>
@@ -281,6 +352,43 @@
     </div>
 
     <div id="map"></div>
+
+    <!-- النافذة المركزية لعرض تفاصيل العقار -->
+    <div id="propertyModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeModal()">×</button>
+            <div class="modal-media-container">
+                <img id="modalImg" src="" alt="صورة العقار">
+                <button id="modalVideoBtn" class="video-request-btn">اطلب فيديو 🎥</button>
+            </div>
+            <div class="modal-details">
+                <div id="modalPrice" class="popup-price"></div>
+                <div id="modalLocation" class="popup-location"></div>
+                
+                <div class="property-lines">
+                    <div class="property-line-item"><span>نوع العقار:</span> <span id="modalType"></span></div>
+                    <div class="property-line-item"><span>المساحة:</span> <span id="modalArea"></span></div>
+                    <div class="property-line-item"><span>التقسيم:</span> <span id="modalLayout"></span></div>
+                    <div class="property-line-item"><span>السند القانوني:</span> <span id="modalLegal"></span></div>
+                    <div class="property-line-item"><span>حالة السعر:</span> <span id="modalBazar"></span></div>
+                </div>
+
+                <div id="modalNotesContainer" class="popup-notes" style="display:none;">
+                    <b>ملاحظة:</b> <span id="modalNotes"></span>
+                </div>
+
+                <a id="modalWhatsapp" href="#" target="_blank" class="whatsapp-btn">
+                    تواصل عبر الواتساب
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تشغيل الفيديو المنبثقة -->
+    <div id="videoModal" class="video-modal">
+        <button class="close-video" onclick="closeVideoModal()">×</button>
+        <video id="activeVideoPlayer" controls></video>
+    </div>
 
     <div class="map-legend">
         <div class="legend-title">أنواع العقارات</div>
@@ -339,55 +447,66 @@
         }
         const database = firebase.database();
 
+        function closeModal() {
+            document.getElementById('propertyModal').style.display = 'none';
+        }
+
+        function closeVideoModal() {
+            const vPlayer = document.getElementById('activeVideoPlayer');
+            vPlayer.pause();
+            vPlayer.src = '';
+            document.getElementById('videoModal').style.display = 'none';
+        }
+
         database.ref('properties').on('child_added', (snapshot) => {
             const data = snapshot.val();
             if (data && data.lat && data.lng) {
-                let mediaHTML = '';
-                if (data.image) {
-                    mediaHTML = `<img src="${data.image}" alt="صورة العقار" />`;
-                } else {
-                    mediaHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;background:#333;font-size:0.8rem;">لا توجد صورة</div>`;
-                }
+                const marker = L.marker([data.lat, data.lng], { icon: createCustomIcon(data.generalType || 'شقة') }).addTo(map);
 
-                const phoneNum = data.whatsappNumber || '963949041251';
-
-                const popupContent = `
-                    <div class="popup-card">
-                        <div class="popup-media-container">
-                            ${mediaHTML}
-                            <a href="https://wa.me/${phoneNum}?text=أريد%2520رؤية%2520فيديو%2520العقار%2520رقم%2520${data.propertyId}" target="_blank" class="video-request-btn">اطلب فيديو 🎥</a>
-                        </div>
-                        <div class="popup-details">
-                            <div class="popup-price">${data.price}</div>
-                            <div class="popup-location">📍 ${data.location || 'الموقع غير محدد'}</div>
-                            
-                            <div class="property-lines">
-                                <div class="property-line-item"><span>نوع العقار:</span> <span>${data.type}</span></div>
-                                <div class="property-line-item"><span>المساحة:</span> <span>${data.area} م²</span></div>
-                                <div class="property-line-item"><span>التقسيم:</span> <span>${data.layout}</span></div>
-                                <div class="property-line-item"><span>السند القانوني:</span> <span>${data.legalStatus || 'غير محدد'}</span></div>
-                                <div class="property-line-item"><span>حالة السعر:</span> <span>${data.bazarStatus || 'غير محدد'}</span></div>
-                            </div>
-
-                            ${data.notes ? `<div class="popup-notes"><b>ملاحظة:</b> ${data.notes}</div>` : ''}
-
-                            <a href="https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}" target="_blank" class="whatsapp-btn">
-                                تواصل عبر الواتساب
-                            </a>
-                        </div>
-                    </div>
-                `;
-
-                const marker = L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type) })
-                    .addTo(map)
-                    .bindPopup(popupContent);
-
-                // ميزة سحب وتوسيط الخريطة تلقائياً عند الضغط على الأيقونة ليصبح العقار في المنتصف تماماً
                 marker.on('click', function() {
+                    // توسيط الخريطة تلقائياً على العقار
                     map.setView([data.lat, data.lng], map.getZoom(), {
                         animate: true,
                         duration: 0.6
                     });
+
+                    // تعبئة بيانات النافذة المركزية
+                    document.getElementById('modalImg').src = data.image || '';
+                    document.getElementById('modalPrice').innerText = data.price || '';
+                    document.getElementById('modalLocation').innerText = '📍 ' + (data.location || 'الموقع غير محدد');
+                    document.getElementById('modalType').innerText = data.type || '';
+                    document.getElementById('modalArea').innerText = (data.area || '') + ' م²';
+                    document.getElementById('modalLayout').innerText = data.layout || '';
+                    document.getElementById('modalLegal').innerText = data.legalStatus || '';
+                    document.getElementById('modalBazar').innerText = data.bazarStatus || '';
+
+                    const notesContainer = document.getElementById('modalNotesContainer');
+                    if (data.notes) {
+                        document.getElementById('modalNotes').innerText = data.notes;
+                        notesContainer.style.display = 'block';
+                    } else {
+                        notesContainer.style.display = 'none';
+                    }
+
+                    const phoneNum = data.whatsappNumber || '963949041251';
+                    document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}`;
+
+                    // زر طلب الفيديو
+                    const videoBtn = document.getElementById('modalVideoBtn');
+                    if (data.video) {
+                        videoBtn.style.display = 'block';
+                        videoBtn.onclick = function() {
+                            const vPlayer = document.getElementById('activeVideoPlayer');
+                            vPlayer.src = data.video;
+                            document.getElementById('videoModal').style.display = 'flex';
+                            vPlayer.play();
+                        };
+                    } else {
+                        videoBtn.style.display = 'none';
+                    }
+
+                    // إظهار النافذة المركزية
+                    document.getElementById('propertyModal').style.display = 'flex';
                 });
             }
         });
