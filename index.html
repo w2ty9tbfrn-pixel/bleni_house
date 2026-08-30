@@ -63,7 +63,6 @@
             z-index: 1;
         }
 
-        /* زر الاتصال السريع المنبثق على اليمين */
         .quick-call-widget {
             position: fixed;
             right: 12px;
@@ -100,7 +99,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
-        /* مربع أنواع العقارات مصغر */
+        /* مربع أنواع العقارات مصغر ومرتب ليحتمل الخيارات الجديدة */
         .map-legend {
             position: fixed;
             bottom: 15px;
@@ -109,12 +108,12 @@
             color: #ffffff;
             padding: 6px 8px;
             border-radius: 6px;
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             z-index: 999;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             border: 1px solid var(--accent-gold);
             backdrop-filter: blur(4px);
-            max-width: 130px;
+            max-width: 145px;
         }
 
         .legend-title {
@@ -123,7 +122,7 @@
             color: var(--accent-gold);
             border-bottom: 1px solid rgba(197, 160, 89, 0.3);
             padding-bottom: 2px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
         }
 
         .legend-item {
@@ -133,15 +132,14 @@
         }
 
         .legend-color {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
-            margin-left: 6px;
+            margin-left: 5px;
             display: inline-block;
             flex-shrink: 0;
         }
 
-        /* النافذة المركزية العائمة (Modal) لتفاصيل العقار - تظهر في منتصف الشاشة تماماً */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -208,7 +206,6 @@
             object-fit: cover;
         }
 
-        /* زر طلب الفيديو بلون بارز وجذاب جداً */
         .video-request-btn {
             position: absolute;
             bottom: 12px;
@@ -225,9 +222,7 @@
             z-index: 5;
         }
 
-        .modal-details {
-            padding: 15px;
-        }
+        .modal-details { padding: 15px; }
 
         .popup-price {
             font-size: 1.25rem;
@@ -263,15 +258,8 @@
             justify-content: space-between;
         }
 
-        .property-line-item span:first-child {
-            color: #666;
-            font-weight: 600;
-        }
-
-        .property-line-item span:last-child {
-            color: var(--primary-green);
-            font-weight: bold;
-        }
+        .property-line-item span:first-child { color: #666; font-weight: 600; }
+        .property-line-item span:last-child { color: var(--primary-green); font-weight: bold; }
 
         .popup-notes {
             font-size: 0.82rem;
@@ -300,7 +288,6 @@
             box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
         }
 
-        /* نافذة مشغل الفيديو المنبثقة مباشرة */
         .video-modal {
             position: fixed;
             top: 0;
@@ -356,7 +343,6 @@
 
     <div id="map"></div>
 
-    <!-- النافذة المركزية العائمة لعرض تفاصيل العقار بدقة في المنتصف -->
     <div id="propertyModal" class="modal-overlay">
         <div class="modal-card">
             <button class="modal-close-btn" onclick="closeModal()">×</button>
@@ -387,20 +373,21 @@
         </div>
     </div>
 
-    <!-- نافذة تشغيل الفيديو المباشر عند النقر على طلب فيديو -->
     <div id="videoModal" class="video-modal">
         <button class="close-video" onclick="closeVideoModal()">×</button>
         <video id="activeVideoPlayer" controls autoplay></video>
     </div>
 
+    <!-- مفتاح الخريطة المحدث ليشمل أنواع الشقق بدقة -->
     <div class="map-legend">
         <div class="legend-title">أنواع العقارات</div>
-        <div class="legend-item"><span class="legend-color" style="background: #007bff;"></span> شقة</div>
+        <div class="legend-item"><span class="legend-color" style="background: #00bfff;"></span> شقة عادية</div>
+        <div class="legend-item"><span class="legend-color" style="background: #007bff;"></span> شقة سوبر ديلوكس</div>
+        <div class="legend-item"><span class="legend-color" style="background: #6c757d;"></span> شقة على العظم</div>
         <div class="legend-item"><span class="legend-color" style="background: #dc3545;"></span> فيلا</div>
         <div class="legend-item"><span class="legend-color" style="background: #fd7e14;"></span> بيت مستقل</div>
         <div class="legend-item"><span class="legend-color" style="background: #28a745;"></span> مزرعة</div>
         <div class="legend-item"><span class="legend-color" style="background: #795548;"></span> أرض</div>
-        <div class="legend-item"><span class="legend-color" style="background: #6c757d;"></span> محضر</div>
         <div class="legend-item"><span class="legend-color" style="background: #ffc107;"></span> مشروع استثماري</div>
     </div>
 
@@ -416,14 +403,17 @@
 
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
+        // تخصيص الألوان لكل نوع شقة أو عقار
         const pinColors = {
-            'شقة': '#007bff',
+            'شقة عادية': '#00bfff',
+            'شقة سوبر ديلوكس': '#007bff',
+            'شقة على العظم': '#6c757d',
             'فيلا': '#dc3545',
-            'بيت': '#fd7e14',
+            'بيت مستقل': '#fd7e14',
             'مزرعة': '#28a745',
             'أرض': '#795548',
-            'محضر': '#6c757d',
-            'استثمار': '#ffc107'
+            'محضر': '#343a40',
+            'مشروع استثماري': '#ffc107'
         };
 
         function createCustomIcon(type) {
@@ -464,16 +454,14 @@
         database.ref('properties').on('child_added', (snapshot) => {
             const data = snapshot.val();
             if (data && data.lat && data.lng) {
-                const marker = L.marker([data.lat, data.lng], { icon: createCustomIcon(data.generalType || 'شقة') }).addTo(map);
+                const marker = L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type || 'شقة سوبر ديلوكس') }).addTo(map);
 
                 marker.on('click', function() {
-                    // توسيط الخريطة تلقائياً على العقار
                     map.setView([data.lat, data.lng], map.getZoom(), {
                         animate: true,
                         duration: 0.6
                     });
 
-                    // تعبئة البيانات في النافذة المركزية العائمة
                     document.getElementById('modalImg').src = data.image || '';
                     document.getElementById('modalPrice').innerText = data.price || '';
                     document.getElementById('modalLocation').innerText = '📍 ' + (data.location || 'الموقع غير محدد');
@@ -494,7 +482,6 @@
                     const phoneNum = data.whatsappNumber || '963949041251';
                     document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}`;
 
-                    // تشغيل الفيديو المرفوع مباشرة عند الضغط على زر طلب الفيديو
                     const videoBtn = document.getElementById('modalVideoBtn');
                     if (data.video) {
                         videoBtn.style.display = 'block';
@@ -508,7 +495,6 @@
                         videoBtn.style.display = 'none';
                     }
 
-                    // إظهار النافذة المركزية العائمة فوق الشاشة بالكامل
                     document.getElementById('propertyModal').style.display = 'flex';
                 });
             }
