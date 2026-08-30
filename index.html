@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --primary-green: #1b3b2b; /* الأخضر الزيتي الفخم */
-            --accent-gold: #c5a059;   /* لمسة ذهبية متناسقة */
+            --primary-green: #1b3b2b;
+            --accent-gold: #c5a059;
             --bg-light: #f4f6f4;
             --text-dark: #1a1a1a;
         }
@@ -28,7 +28,6 @@
             background-color: var(--bg-light);
         }
 
-        /* الهيدر الثابت أعلى الشاشة */
         .app-header {
             position: fixed;
             top: 0;
@@ -48,7 +47,6 @@
         .app-header h1 {
             font-size: 1.2rem;
             font-weight: 700;
-            letter-spacing: 1px;
             color: #ffffff;
         }
 
@@ -58,7 +56,6 @@
             margin-right: 5px;
         }
 
-        /* حاوية الخريطة */
         #map {
             width: 100%;
             height: calc(100% - 60px);
@@ -66,7 +63,6 @@
             z-index: 1;
         }
 
-        /* صندوق دليل الدبابيس (Legend) - أسفل اليسار */
         .map-legend {
             position: fixed;
             bottom: 20px;
@@ -104,7 +100,6 @@
             display: inline-block;
         }
 
-        /* نافذة العرض التفصيلية للعقار */
         .popup-card {
             max-width: 260px;
             direction: rtl;
@@ -128,7 +123,7 @@
 
         .popup-media {
             width: 100%;
-            max-height: 140px;
+            max-height: 160px;
             object-fit: cover;
             border-radius: 6px;
             margin: 6px 0;
@@ -159,7 +154,7 @@
     <div id="map"></div>
 
     <div class="map-legend">
-        <div class="legend-title">انواع العقارات</div>
+        <div class="legend-title">أنواع العقارات</div>
         <div class="legend-item"><span class="legend-color" style="background: #007bff;"></span> شقة</div>
         <div class="legend-item"><span class="legend-color" style="background: #dc3545;"></span> فيلا</div>
         <div class="legend-item"><span class="legend-color" style="background: #fd7e14;"></span> بيت مستقل</div>
@@ -170,26 +165,14 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script>
-        // 1. إعدادات خريطة سوريا (المركز والأبعاد)
-        const map = L.map('map', {
-            zoomControl: false // إلغاء زوم الأزرار ليكون التصفح سلس على الجوال
-        }).setView([34.8021, 38.9968], 7); // إحداثيات سوريا
+        const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
 
-        // إضافة طبقة خريطة الشوارع والمباني التفصيلية من OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© Bleni House'
-        }).addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
 
-        // إعادة تفعيل زر الزوم في مكان مناسب
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
-        // 2. إعدادات ألوان الدبابيس بحسب نوع العقار
         const pinColors = {
             'شقة': '#007bff',
             'فيلا': '#dc3545',
@@ -200,7 +183,6 @@
             'استثمار': '#ffc107'
         };
 
-        // دالة إنشاء دبوس ملون مخصص
         function createCustomIcon(type) {
             const color = pinColors[type] || '#1b3b2b';
             const svgIcon = `
@@ -216,52 +198,43 @@
             });
         }
 
-        // 3. تهيئة Firebase (سوف نضع إعدادات مشروعك هنا)
-        const firebaseConfig = {
-            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com" // سيتم استبدال الرابط برابط مشروعك
-        };
-        
-        // التحقق من التهيئة
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const database = firebase.database();
-
-        // 4. الاستماع اللحظي للعقارات الجديدة المنشورة من لوحة المالك
-        database.ref('properties').on('child_added', (snapshot) => {
-            const data = snapshot.val();
-            if (data && data.lat && data.lng) {
-                
-                // تجهيز المحتوى عند النقر على الدبوس
-                let mediaHTML = '';
-                if (data.mediaUrl) {
-                    if (data.mediaType === 'video') {
-                        mediaHTML = `<video src="${data.mediaUrl}" controls class="popup-media"></video>`;
-                    } else {
-                        mediaHTML = `<img src="${data.mediaUrl}" class="popup-media" alt="صورة العقار" />`;
+        function loadProperties() {
+            const properties = JSON.parse(localStorage.getItem('bleni_properties') || '[]');
+            properties.forEach(data => {
+                if (data.lat && data.lng) {
+                    let mediaHTML = '';
+                    if (data.mediaData) {
+                        if (data.mediaType && data.mediaType.startsWith('video')) {
+                            mediaHTML = `<video src="${data.mediaData}" controls class="popup-media"></video>`;
+                        } else {
+                            mediaHTML = `<img src="${data.mediaData}" class="popup-media" alt="صورة العقار" />`;
+                        }
                     }
+
+                    const phoneNum = data.whatsappNumber || '963949041251';
+
+                    const popupContent = `
+                        <div class="popup-card">
+                            <div class="popup-title">عقار رقم: ${data.propertyId || 'غير محدد'}</div>
+                            <div class="popup-info"><b>النوع:</b> ${data.type}</div>
+                            <div class="popup-info"><b>المساحة:</b> ${data.area} م²</div>
+                            <div class="popup-info"><b>التقسيم:</b> ${data.layout}</div>
+                            <div class="popup-info"><b>السعر:</b> ${data.price}</div>
+                            ${mediaHTML}
+                            <a href="https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}" target="_blank" class="whatsapp-btn">
+                                تواصل عبر الواتساب
+                            </a>
+                        </div>
+                    `;
+
+                    L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type) })
+                        .addTo(map)
+                        .bindPopup(popupContent);
                 }
+            });
+        }
 
-                const popupContent = `
-                    <div class="popup-card">
-                        <div class="popup-title">عقار رقم: ${data.propertyId || 'غير محدد'}</div>
-                        <div class="popup-info"><b>النوع:</b> ${data.type}</div>
-                        <div class="popup-info"><b>المساحة:</b> ${data.area} م²</div>
-                        <div class="popup-info"><b>التقسيم:</b> ${data.layout}</div>
-                        <div class="popup-info"><b>السعر:</b> ${data.price}</div>
-                        ${mediaHTML}
-                        <a href="https://wa.me/${data.whatsappNumber}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}" target="_blank" class="whatsapp-btn">
-                            تواصل عبر الواتساب
-                        </a>
-                    </div>
-                `;
-
-                // إضافة الدبوس على الخريطة
-                L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type) })
-                    .addTo(map)
-                    .bindPopup(popupContent);
-            }
-        });
+        loadProperties();
     </script>
 </body>
 </html>
