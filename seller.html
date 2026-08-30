@@ -139,7 +139,6 @@
             display: none;
         }
 
-        /* قائمة إدارة العقارات */
         .property-list-item {
             display: flex;
             align-items: center;
@@ -149,9 +148,7 @@
             gap: 10px;
         }
 
-        .property-list-item:last-child {
-            border-bottom: none;
-        }
+        .property-list-item:last-child { border-bottom: none; }
 
         .prop-info {
             display: flex;
@@ -179,10 +176,7 @@
             color: #666;
         }
 
-        .prop-actions {
-            display: flex;
-            gap: 6px;
-        }
+        .prop-actions { display: flex; gap: 6px; }
 
         .btn-action {
             padding: 6px 10px;
@@ -204,7 +198,6 @@
     </header>
 
     <div class="main-container">
-        <!-- نموذج الإضافة / التعديل -->
         <form id="property-form">
             <input type="hidden" id="editKey" value="">
             <div class="card">
@@ -220,13 +213,15 @@
                 <div class="form-group">
                     <label>نوع العقار وحالته</label>
                     <select id="type" class="form-control" required>
-                        <option value="شقة سوبر ديلوكس">شقة سوبر ديلوكس (دبوس أزرق)</option>
-                        <option value="فيلا">فيلا (دبوس أحمر)</option>
-                        <option value="بيت مستقل">بيت مستقل (دبوس برتقالي)</option>
-                        <option value="مزرعة">مزرعة (دبوس أخضر)</option>
-                        <option value="أرض">أرض (دبوس بني)</option>
-                        <option value="محضر">محضر (دبوس رمادي)</option>
-                        <option value="مشروع استثماري">مشروع استثماري (دبوس ذهبي)</option>
+                        <option value="شقة عادية">شقة عادية</option>
+                        <option value="شقة سوبر ديلوكس">شقة سوبر ديلوكس</option>
+                        <option value="شقة على العظم">شقة على العظم</option>
+                        <option value="فيلا">فيلا</option>
+                        <option value="بيت مستقل">بيت مستقل</option>
+                        <option value="مزرعة">مزرعة</option>
+                        <option value="أرض">أرض</option>
+                        <option value="محضر">محضر</option>
+                        <option value="مشروع استثماري">مشروع استثماري</option>
                     </select>
                 </div>
 
@@ -270,7 +265,7 @@
 
                 <div class="form-group">
                     <label>ملاحظة العقار (إطلالة، كساء، إلخ...)</label>
-                    <input type="text" id="notes" class="form-control" placeholder="مثال: بحاجة لكساء خفيف، إطلالة رائعة">
+                    <input type="text" id="notes" class="form-control" placeholder="مثال: إطلالة بحرية أو جبلية رائعة">
                 </div>
 
                 <div class="form-group">
@@ -321,7 +316,6 @@
             <button type="button" id="cancelEditBtn" class="btn-submit btn-cancel-edit" onclick="cancelEdit()">إلغاء التعديل</button>
         </form>
 
-        <!-- قائمة إدارة العقارات المضافة (تعديل / حذف) -->
         <div class="card" style="margin-top: 20px;">
             <div class="card-title"> إدارة العقارات الحالية (تعديل أو حذف)</div>
             <div id="managePropertyList">
@@ -378,7 +372,6 @@
             });
         }
 
-        // جلب العقارات وعرضها في قائمة الإدارة السفلية
         database.ref('properties').on('value', (snapshot) => {
             const listContainer = document.getElementById('managePropertyList');
             listContainer.innerHTML = '';
@@ -412,7 +405,6 @@
             });
         });
 
-        // زر التعديل: تعبئة البيانات في النموذج بالاعلى
         window.startEdit = function(key) {
             const prop = allPropertiesCache[key];
             if (!prop) return;
@@ -445,7 +437,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // إلغاء وضع التعديل
         window.cancelEdit = function() {
             document.getElementById('editKey').value = '';
             document.getElementById('property-form').reset();
@@ -456,7 +447,6 @@
             if (currentMarker) mapPicker.removeLayer(currentMarker);
         };
 
-        // حذف العقار
         window.deleteProperty = function(key) {
             if (confirm("هل أنت متأكد من رغبتك في حذف هذا العقار نهائياً؟")) {
                 database.ref('properties/' + key).remove()
@@ -468,7 +458,6 @@
             }
         };
 
-        // إرسال النموذج (إضافة جديدة أو تحديث عقار موجود)
         document.getElementById('property-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -487,25 +476,14 @@
             let imageData = imgFile ? await readFileAsDataURL(imgFile) : '';
             let vData = vFile ? await readFileAsDataURL(vFile) : '';
 
-            // إذا كان تعديل ولم يتم اختيار صورة أو فيديو جديد، نحتفظ بالقديم
             if (editKey && allPropertiesCache[editKey]) {
                 if (!imageData) imageData = allPropertiesCache[editKey].image || '';
                 if (!vData) vData = allPropertiesCache[editKey].video || '';
             }
 
-            const typeValue = document.getElementById('type').value;
-            let generalType = 'شقة';
-            if (typeValue.includes('فيلا')) generalType = 'فيلا';
-            else if (typeValue.includes('بيت')) generalType = 'بيت';
-            else if (typeValue.includes('مزرعة')) generalType = 'مزرعة';
-            else if (typeValue.includes('أرض')) generalType = 'أرض';
-            else if (typeValue.includes('محضر')) generalType = 'محضر';
-            else if (typeValue.includes('استثمار')) generalType = 'استثمار';
-
             const propertyData = {
                 propertyId: document.getElementById('propertyId').value,
-                type: typeValue,
-                generalType: generalType,
+                type: document.getElementById('type').value,
                 area: document.getElementById('area').value,
                 layout: document.getElementById('layout').value,
                 legalStatus: document.getElementById('legalStatus').value,
@@ -529,7 +507,6 @@
             };
 
             if (editKey) {
-                // عملية تحديث عقار قائم
                 Promise.all([
                     database.ref('properties/' + editKey).update(propertyData),
                     database.ref('secret_properties/' + editKey).update(secretData)
@@ -539,7 +516,6 @@
                 }).catch(err => alert("خطأ بالتحديث: " + err.message));
 
             } else {
-                // عملية إضافة عقار جديد
                 const newRef = database.ref('properties').push();
                 newRef.set(propertyData).then(() => {
                     database.ref('secret_properties/' + newRef.key).set(secretData);
