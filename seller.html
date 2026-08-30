@@ -342,8 +342,7 @@
         function initPickerMap() {
             mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
-            // خريطة جوجل الشوارع والأماكن الواضحة
-            L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; Google Maps'
@@ -492,7 +491,7 @@
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerText = "جاري الحفظ والنشر... ⏳";
+            submitBtn.innerText = "جاري الحفظ والنشر للسحاب... ⏳";
 
             try {
                 const editKey = document.getElementById('editKey').value;
@@ -535,13 +534,13 @@
                 if (editKey) {
                     await database.ref('properties/' + editKey).set(propertyData);
                     await database.ref('secret_properties/' + editKey).set(secretData);
-                    alert("✨ تم تحديث العقار ونشره بنجاح!");
+                    alert("✨ تم تحديث العقار ونشره فوراً على خريطة المشترين!");
                     cancelEdit();
                 } else {
                     const newRef = database.ref('properties').push();
                     await newRef.set(propertyData);
                     await database.ref('secret_properties/' + newRef.key).set(secretData);
-                    alert("✅ تم حفظ ونشر العقار الجديد بنجاح في السحاب!");
+                    alert("🚀 تم حفظ ونشر العقار الجديد بنجاح! أصبح ظاهراً الآن على لوحة المشتري.");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
                     document.getElementById('lat').value = '';
