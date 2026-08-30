@@ -213,7 +213,7 @@
 
                 <div class="form-group">
                     <label>نوع العقار وحالته</label>
-                    <select id="type" class="form-control" required>
+                    <select id="type" class="form-control" onchange="updateMarkerColor()" required>
                         <option value="شقة عادية">شقة عادية</option>
                         <option value="شقة سوبر ديلوكس">شقة سوبر ديلوكس</option>
                         <option value="شقة على العظم">شقة على العظم</option>
@@ -286,7 +286,7 @@
             </div>
 
             <div class="card">
-                <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
+                <div class="card-title">2. تحديد موقع العقار على الخريطة (أقمار صناعية مع أسماء الشوارع)</div>
                 <p style="font-size: 0.8rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة:</p>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat">
@@ -330,6 +330,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
+        // التحقق من كلمة السر
         const SECRET_PASSWORD = "123456";
         let userPass = prompt("أدخل كلمة السر للدخول لوحة المالك:");
         if (userPass !== SECRET_PASSWORD) {
@@ -339,10 +340,37 @@
 
         let mapPicker, currentMarker = null;
 
+        const pinColors = {
+            'شقة عادية': '#00bfff',
+            'شقة سوبر ديلوكس': '#007bff',
+            'شقة على العظم': '#6c757d',
+            'فيلا': '#dc3545',
+            'بيت مستقل': '#fd7e14',
+            'مزرعة': '#28a745',
+            'أرض': '#795548',
+            'محضر': '#343a40',
+            'مشروع استثماري': '#ffc107'
+        };
+
+        function getCustomIcon(type) {
+            const color = pinColors[type] || '#1b3b2b';
+            const svgIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                    <path fill="${color}" stroke="#ffffff" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>`;
+            return L.divIcon({
+                html: svgIcon,
+                className: '',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32]
+            });
+        }
+
         function initPickerMap() {
+            // خريطة أقمار صناعية مع أسماء الشوارع والمناطق (Hybrid)
             mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
-            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; Google Maps'
@@ -355,17 +383,31 @@
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
 
+                const selectedType = document.getElementById('type').value;
+
                 if (currentMarker) {
                     mapPicker.removeLayer(currentMarker);
                 }
-                currentMarker = L.marker([lat, lng]).addTo(mapPicker);
+                currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
             });
         }
+
+        window.updateMarkerColor = function() {
+            const lat = document.getElementById('lat').value;
+            const lng = document.getElementById('lng').value;
+            const selectedType = document.getElementById('type').value;
+
+            if (lat && lng && currentMarker) {
+                mapPicker.removeLayer(currentMarker);
+                currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
+            }
+        };
 
         window.onload = function() {
             initPickerMap();
         };
 
+        // ربط السحابة بقاعدة بياناتك الخاصة
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
@@ -442,7 +484,7 @@
             if (prop.lat && prop.lng) {
                 mapPicker.setView([prop.lat, prop.lng], 15);
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
-                currentMarker = L.marker([prop.lat, prop.lng]).addTo(mapPicker);
+                currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
 
             document.getElementById('formTitleText').innerText = "2. تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
@@ -551,7 +593,7 @@
                     }
                 }
             } catch (err) {
-                alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
+                alert("❌ حدث خطأ أثناء الحفظ (قد يكون حجم الفيديو كبيراً جداً): " + err.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار الآن 🔄" : "حفظ ونشر العقار فوراً 🚀";
