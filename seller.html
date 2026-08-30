@@ -286,7 +286,7 @@
 
             <div class="card">
                 <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
-                <p style="font-size: 0.8rem; color: #666;">اضغط على الخريطة لتحديد موقع العقار بدقة:</p>
+                <p style="font-size: 0.8rem; color: #666;">اضغط على الخريطة لتحديد موقع العقار بدقة (تظهر الشوارع وأسماء المناطق بوضوح):</p>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat" required>
                 <input type="hidden" id="lng" required>
@@ -317,7 +317,7 @@
         </form>
 
         <div class="card" style="margin-top: 20px;">
-            <div class="card-title"> إدارة العقارات الحالية (تعديل أو حذف)</div>
+            <div class="card-title">إدارة العقارات الحالية (تعديل أو حذف)</div>
             <div id="managePropertyList">
                 <p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">جاري تحميل العقارات...</p>
             </div>
@@ -337,8 +337,12 @@
         }
 
         const mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapPicker);
-        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.85 }).addTo(mapPicker);
+        
+        // استخدام خريطة القياسية المفصلة لتظهر أسماء الشوارع والمناطق بدقة
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mapPicker);
 
         let currentMarker = null;
 
@@ -502,7 +506,7 @@
                 propertyId: document.getElementById('propertyId').value,
                 ownerName: document.getElementById('ownerName').value,
                 ownerPhone: document.getElementById('ownerPhone').value,
-                photographer: document.getElementById('photographer').value,
+                photographer: document.getElementById('photographer', '').value,
                 commission: document.getElementById('commission').value
             };
 
