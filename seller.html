@@ -286,7 +286,7 @@
 
             <div class="card">
                 <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
-                <p style="font-size: 0.8rem; color: #666;">اضغط على الخريطة لتحديد موقع العقار بدقة (تظهر الشوارع وأسماء المناطق بوضوح):</p>
+                <p style="font-size: 0.8rem; color: #666;">اضغط على الخريطة لتحديد الموقع (تظهر تفاصيل المباني، الشوارع، وأسماء المناطق):</p>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat" required>
                 <input type="hidden" id="lng" required>
@@ -338,10 +338,15 @@
 
         const mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
         
-        // استخدام خريطة القياسية المفصلة لتظهر أسماء الشوارع والمناطق بدقة
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // الخريطة المختلطة (Hybrid) في لوحة المالك
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(mapPicker);
+
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            opacity: 0.95
         }).addTo(mapPicker);
 
         let currentMarker = null;
@@ -506,7 +511,7 @@
                 propertyId: document.getElementById('propertyId').value,
                 ownerName: document.getElementById('ownerName').value,
                 ownerPhone: document.getElementById('ownerPhone').value,
-                photographer: document.getElementById('photographer', '').value,
+                photographer: document.getElementById('photographer').value,
                 commission: document.getElementById('commission').value
             };
 
