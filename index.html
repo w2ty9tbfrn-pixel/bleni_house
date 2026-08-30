@@ -219,7 +219,6 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(255, 65, 108, 0.4);
             z-index: 5;
-            display: none;
         }
 
         .modal-details { padding: 15px; }
@@ -405,6 +404,9 @@
 
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
+        // طبقة لتجميع وإدارة دبابيس الخريطة وتحديثها بشكل حي
+        const markersLayer = L.layerGroup().addTo(map);
+
         const pinColors = {
             'شقة عادية': '#00bfff',
             'شقة سوبر ديلوكس': '#007bff',
@@ -452,53 +454,63 @@
             document.getElementById('videoModal').style.display = 'none';
         }
 
-        database.ref('properties').on('child_added', (snapshot) => {
-            const data = snapshot.val();
-            if (data && data.lat && data.lng) {
-                const marker = L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type || 'شقة سوبر ديلوكس') }).addTo(map);
+        // الاستماع للتغييرات الحية باستخدام .on('value') لضمان مسح القديم وتحديث الجديد وحذف ما حذفه المالك فوريّاً
+        database.ref('properties').on('value', (snapshot) => {
+            markersLayer.clearLayers(); // تفريغ الخريطة من الدبابيس القديمة لمنع التكرار
+            const data = snapshot.val() || {};
 
-                marker.on('click', function() {
-                    map.setView([data.lat, data.lng], 16, {
-                        animate: true,
-                        duration: 0.6
+            Object.keys(data).forEach(key => {
+                const prop = data[key];
+                if (prop && prop.lat && prop.lng) {
+                    const marker = L.marker([prop.lat, prop.lng], { 
+                        icon: createCustomIcon(prop.type || 'شقة سوبر ديلوكس') 
                     });
 
-                    document.getElementById('modalImg').src = data.image || '';
-                    document.getElementById('modalPrice').innerText = data.price || '';
-                    document.getElementById('modalLocation').innerText = '📍 ' + (data.location || 'الموقع غير محدد');
-                    document.getElementById('modalType').innerText = data.type || '';
-                    document.getElementById('modalArea').innerText = (data.area || '') + ' م²';
-                    document.getElementById('modalLayout').innerText = data.layout || '';
-                    document.getElementById('modalLegal').innerText = data.legalStatus || '';
-                    document.getElementById('modalBazar').innerText = data.bazarStatus || '';
+                    marker.on('click', function() {
+                        map.setView([prop.lat, prop.lng], 16, {
+                            animate: true,
+                            duration: 0.6
+                        });
 
-                    const notesContainer = document.getElementById('modalNotesContainer');
-                    if (data.notes) {
-                        document.getElementById('modalNotes').innerText = data.notes;
-                        notesContainer.style.display = 'block';
-                    } else {
-                        notesContainer.style.display = 'none';
-                    }
+                        document.getElementById('modalImg').src = prop.image || '';
+                        document.getElementById('modalPrice').innerText = prop.price || '';
+                        document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
+                        document.getElementById('modalType').innerText = prop.type || '';
+                        document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
+                        document.getElementById('modalLayout').innerText = prop.layout || '';
+                        document.getElementById('modalLegal').innerText = prop.legalStatus || '';
+                        document.getElementById('modalBazar').innerText = prop.bazarStatus || '';
 
-                    const phoneNum = data.whatsappNumber || '963949041251';
-                    document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}`;
+                        const notesContainer = document.getElementById('modalNotesContainer');
+                        if (prop.notes) {
+                            document.getElementById('modalNotes').innerText = prop.notes;
+                            notesContainer.style.display = 'block';
+                        } else {
+                            notesContainer.style.display = 'none';
+                        }
 
-                    const videoBtn = document.getElementById('modalVideoBtn');
-                    if (data.video) {
-                        videoBtn.style.display = 'block';
-                        videoBtn.onclick = function() {
-                            const vPlayer = document.getElementById('activeVideoPlayer');
-                            vPlayer.src = data.video;
-                            document.getElementById('videoModal').style.display = 'flex';
-                            vPlayer.play();
-                        };
-                    } else {
-                        videoBtn.style.display = 'none';
-                    }
+                        const phoneNum = prop.whatsappNumber || '963949041251';
+                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${prop.propertyId}`;
 
-                    document.getElementById('propertyModal').style.display = 'flex';
-                });
-            }
+                        const videoBtn = document.getElementById('modalVideoBtn');
+                        if (prop.video) {
+                            videoBtn.style.display = 'block';
+                            videoBtn.onclick = function() {
+                                const vPlayer = document.getElementById('activeVideoPlayer');
+                                vPlayer.src = prop.video;
+                                document.getElementById('videoModal').style.display = 'flex';
+                                vPlayer.play();
+                            };
+                        } else {
+                            videoBtn.style.display = 'none';
+                        }
+
+                        document.getElementById('propertyModal').style.display = 'flex';
+                    });
+
+                    markersLayer.addLayer(marker);
+                }
+            });
         });
     </script>
 </body>
