@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لوحة المالك | Bleni House</title>
-    <!-- Leaflet CSS للخريطة -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --primary-green: #1b3b2b; /* الأخضر الزيتي الفخم */
-            --accent-gold: #c5a059;   /* لمسة ذهبية */
+            --primary-green: #1b3b2b;
+            --accent-gold: #c5a059;
             --bg-light: #f4f6f4;
             --text-dark: #1a1a1a;
-            --secret-bg: #fff3cd;     /* لون تمييز للصندوق السري */
+            --secret-bg: #fff3cd;
             --secret-border: #ffeeba;
         }
 
@@ -26,12 +25,10 @@
 
         body, html {
             width: 100%;
-            height: 100%;
             background-color: var(--bg-light);
             color: var(--text-dark);
         }
 
-        /* الهيدر الثابت */
         .app-header {
             position: fixed;
             top: 0;
@@ -100,11 +97,6 @@
             outline: none;
         }
 
-        .form-control:focus {
-            border-color: var(--primary-green);
-        }
-
-        /* تنسيق الصندوق السري */
         .secret-box {
             background-color: var(--secret-bg);
             border: 1px solid var(--secret-border);
@@ -118,11 +110,8 @@
             font-weight: bold;
             font-size: 0.9rem;
             margin-bottom: 8px;
-            display: flex;
-            align-items: center;
         }
 
-        /* خريطة اختيار الموقع */
         #map-picker {
             width: 100%;
             height: 250px;
@@ -135,32 +124,24 @@
             width: 100%;
             background-color: var(--primary-green);
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
             border-radius: 6px;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            transition: background 0.2s;
-        }
-
-        .btn-submit:active {
-            background-color: #12271c;
         }
     </style>
 </head>
 <body>
 
-    <!-- الهيدر العلوي -->
     <header class="app-header">
         <h1>لوحة المالك <span>| Bleni House</span></h1>
     </header>
 
     <div class="main-container">
         <form id="property-form">
-            
-            <!-- 1. البيانات العامة للعقار (تظهر للمشتري) -->
             <div class="card">
                 <div class="card-title">1. معلومات العقار العامة (تظهر للمشتري)</div>
                 
@@ -183,7 +164,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>المساحة (بالمتر المربع)</label>
+                    <label>المساحة (م²)</label>
                     <input type="number" id="area" class="form-control" placeholder="مثال: 180" required>
                 </div>
 
@@ -198,110 +179,73 @@
                 </div>
 
                 <div class="form-group">
-                    <label>رابط الصورة أو الفيديو (Media URL)</label>
-                    <input type="url" id="mediaUrl" class="form-control" placeholder="ضع رابط الصورة أو الفيديو">
+                    <label>اختيار صورة أو فيديو مباشر من الاستديو 📁</label>
+                    <input type="file" id="mediaFile" class="form-control" accept="image/*,video/*">
                 </div>
 
                 <div class="form-group">
-                    <label>نوع الملف المرفق</label>
-                    <select id="mediaType" class="form-control">
-                        <option value="image">صورة</option>
-                        <option value="video">فيديو</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>رقم الواتساب للتواصل (مع الرمز الدولي بدون +)</label>
-                    <input type="text" id="whatsappNumber" class="form-control" placeholder="مثال: 963912345678" required>
+                    <label>رقم الواتساب للتواصل</label>
+                    <input type="text" id="whatsappNumber" class="form-control" value="963949041251" required>
                 </div>
             </div>
 
-            <!-- 2. تحديد الموقع على الخريطة -->
             <div class="card">
                 <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
-                <p style="font-size: 0.8rem; color: #666;">اضغط على الخريطة لتحديد مكان العقار بدقة:</p>
+                <p style="font-size: 0.8rem; color: #666;">اضغط على الخريطة لتحديد موقع العقار بدقة:</p>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat" required>
                 <input type="hidden" id="lng" required>
             </div>
 
-            <!-- 3. الصندوق السري (خاص بالمالك فقط) -->
             <div class="card secret-box">
-                <div class="secret-title">🔒 3. الصندوق السري (خاص بك فقط - لا يظهر للمشتري)</div>
-                
+                <div class="secret-title">🔒 3. الصندوق السري (خاص بالمالك فقط)</div>
                 <div class="form-group">
-                    <label>اسم المالك الأصلي للعقار</label>
-                    <input type="text" id="ownerName" class="form-control" placeholder="اسم الشخص أو المكتب">
+                    <label>اسم المالك الأصلي</label>
+                    <input type="text" id="ownerName" class="form-control">
                 </div>
-
                 <div class="form-group">
                     <label>رقم هاتف المالك الأصلي</label>
-                    <input type="text" id="ownerPhone" class="form-control" placeholder="رقم المالك الخاص">
+                    <input type="text" id="ownerPhone" class="form-control">
                 </div>
-
                 <div class="form-group">
                     <label>اسم المصور</label>
-                    <input type="text" id="photographer" class="form-control" placeholder="من قام بالتصوير">
+                    <input type="text" id="photographer" class="form-control">
                 </div>
-
                 <div class="form-group">
-                    <label>نسبة العمولات / الأرباح الخاصة بك</label>
-                    <input type="text" id="commission" class="form-control" placeholder="مثال: 2.5% أو 1000 دولار">
+                    <label>نسبة العمولات</label>
+                    <input type="text" id="commission" class="form-control">
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit">حفظ ونشر العقار مباشرة 🚀</button>
+            <button type="submit" class="btn-submit">حفظ ونشر العقار فوراً 🚀</button>
         </form>
     </div>
 
-    <!-- مكتبات Leaflet و Firebase -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script>
-        // 1. نظام حماية الصفحة بكلمة سر
-        const SECRET_PASSWORD = "123456"; // يمكنك تغيير كلمة السر من هنا
-        let userPass = prompt("الرجاء إدخال كلمة السر للدخول إلى لوحة المالك:");
+        const SECRET_PASSWORD = "123456";
+        let userPass = prompt("أدخل كلمة السر للدخول لوجهة المالك:");
         if (userPass !== SECRET_PASSWORD) {
-            alert("كلمة السر خاطئة! لا يمكن الدخول.");
+            alert("كلمة السر خاطئة!");
             document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>غير مصرح بالدخول</h2>";
         }
 
-        // 2. إعدادات الخريطة لاختيار الموقع
-        const mapPicker = L.map('map-picker').setView([34.8021, 38.9968], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19
-        }).addTo(mapPicker);
+        const mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapPicker);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapPicker);
 
         let currentMarker = null;
 
-        // عند النقر على الخريطة
         mapPicker.on('click', function(e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
-
             document.getElementById('lat').value = lat;
             document.getElementById('lng').value = lng;
 
-            if (currentMarker) {
-                mapPicker.removeLayer(currentMarker);
-            }
-
+            if (currentMarker) mapPicker.removeLayer(currentMarker);
             currentMarker = L.marker([lat, lng]).addTo(mapPicker);
         });
 
-        // 3. تهيئة Firebase
-        const firebaseConfig = {
-            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com" // نفس رابط مشروعك
-        };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const database = firebase.database();
-
-        // 4. حفظ البيانات وإرسال العقار
         document.getElementById('property-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -313,43 +257,42 @@
                 return;
             }
 
-            // البيانات العامة التي تظهر للمشتري
-            const propertyData = {
-                propertyId: document.getElementById('propertyId').value,
-                type: document.getElementById('type').value,
-                area: document.getElementById('area').value,
-                layout: document.getElementById('layout').value,
-                price: document.getElementById('price').value,
-                mediaUrl: document.getElementById('mediaUrl').value,
-                mediaType: document.getElementById('mediaType').value,
-                whatsappNumber: document.getElementById('whatsappNumber').value,
-                lat: parseFloat(lat),
-                lng: parseFloat(lng),
-                createdAt: new Date().toISOString()
-            };
+            const fileInput = document.getElementById('mediaFile');
+            const file = fileInput.files[0];
 
-            // البيانات السرية المحفوظة في قسم منفصل (Secret Properties)
-            const secretData = {
-                propertyId: document.getElementById('propertyId').value,
-                ownerName: document.getElementById('ownerName').value,
-                ownerPhone: document.getElementById('ownerPhone').value,
-                photographer: document.getElementById('photographer').value,
-                commission: document.getElementById('commission').value
-            };
+            function saveAndFinish(mediaData, mediaType) {
+                const newProperty = {
+                    propertyId: document.getElementById('propertyId').value,
+                    type: document.getElementById('type').value,
+                    area: document.getElementById('area').value,
+                    layout: document.getElementById('layout').value,
+                    price: document.getElementById('price').value,
+                    whatsappNumber: document.getElementById('whatsappNumber').value,
+                    lat: parseFloat(lat),
+                    lng: parseFloat(lng),
+                    mediaData: mediaData || '',
+                    mediaType: mediaType || ''
+                };
 
-            // حفظ العقار العام للمشتري
-            const newRef = database.ref('properties').push();
-            newRef.set(propertyData).then(() => {
-                
-                // حفظ البيانات السرية في عقدة منفصلة خاصة بالمالك
-                database.ref('secret_properties/' + newRef.key).set(secretData);
+                const currentProperties = JSON.parse(localStorage.getItem('bleni_properties') || '[]');
+                currentProperties.push(newProperty);
+                localStorage.setItem('bleni_properties', JSON.stringify(currentProperties));
 
-                alert("تم حفظ ونشر العقار بنجاح! سيظهر الآن لدى المشتري.");
+                alert("✅ تم حفظ العقار ونشره بنجاح! يرجى فتح واجهة المشتري لرؤية الدبوس.");
                 document.getElementById('property-form').reset();
+                document.getElementById('whatsappNumber').value = "963949041251";
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
-            }).catch((err) => {
-                alert("حدث خطأ في الحفظ: " + err.message);
-            });
+            }
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    saveAndFinish(evt.target.result, file.type);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                saveAndFinish('', '');
+            }
         });
     </script>
 </body>
