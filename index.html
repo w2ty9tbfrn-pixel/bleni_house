@@ -28,6 +28,11 @@
             background-color: var(--bg-light);
         }
 
+        /* هذا السطر السحري يخفي دبابيس وأيقونات معالم جوجل الافتراضية ويترك الأسماء */
+        .leaflet-marker-icon:not(.custom-property-pin) {
+            display: none !important;
+        }
+
         .app-header {
             position: fixed;
             top: 0;
@@ -394,10 +399,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // استخدام الأقمار الصناعية النقية (Satellite Only) بدون أي تسميات أو دبابيس خارجية
+        // العودة لطبقة الظهر الهجينة (حتى تظهر أسماء الشوارع والمناطق والأماكن)
         const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
 
-        L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
@@ -425,7 +430,7 @@
                 </svg>`;
             return L.divIcon({
                 html: svgIcon,
-                className: '',
+                className: 'custom-property-pin', // صنف خاص بدبابيسنا لضمان عدم إخفائها
                 iconSize: [32, 32],
                 iconAnchor: [16, 32],
                 popupAnchor: [0, -32]
