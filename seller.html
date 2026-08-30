@@ -342,8 +342,8 @@
         function initPickerMap() {
             mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
-            // خريطة هجينة من Google (قمر صناعي + أسماء الأماكن والشوارع بوضوح تام)
-            L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+            // استخدام الأقمار الصناعية النقية بدون أي تسميات أو دبابيس خارجية
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; Google Maps'
@@ -445,15 +445,6 @@
                 currentMarker = L.marker([prop.lat, prop.lng]).addTo(mapPicker);
             }
 
-            // جلب البيانات السرية المرتبطة بهذا العقار إن وجدت
-            database.ref('secret_properties/' + key).once('value').then(secSnap => {
-                const sec = secSnap.val() || {};
-                document.getElementById('ownerName').value = sec.ownerName || '';
-                document.getElementById('ownerPhone').value = sec.ownerPhone || '';
-                document.getElementById('photographer').value = sec.photographer || '';
-                document.getElementById('commission').value = sec.commission || '';
-            });
-
             document.getElementById('formTitleText').innerText = "2. تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
             document.getElementById('submitBtn').innerText = "تحديث العقار الآن 🔄";
             document.getElementById('cancelEditBtn').style.display = 'block';
@@ -478,10 +469,8 @@
             if (confirm("هل أنت متأكد من رغبتك في حذف هذا العقار نهائياً؟")) {
                 database.ref('properties/' + key).remove()
                 .then(() => {
-                    return database.ref('secret_properties/' + key).remove();
-                })
-                .then(() => {
-                    alert("🗑️ تم حذف العقار بنجاح من النظام والمشتري!");
+                    database.ref('secret_properties/' + key).remove();
+                    alert("🗑️ تم حذف العقار بنجاح!");
                 })
                 .catch(err => alert("خطأ بالحذف: " + err.message));
             }
@@ -535,16 +524,19 @@
                 commission: document.getElementById('commission').value
             };
 
-            try {
-                if (editKey) {
-                    await database.ref('properties/' + editKey).update(propertyData);
-                    await database.ref('secret_properties/' + editKey).update(secretData);
-                    alert("✨ تم تحديث العقار ونشره للمشترين بنجاح!");
+            if (editKey) {
+                Promise.all([
+                    database.ref('properties/' + editKey).update(propertyData),
+                    database.ref('secret_properties/' + editKey).update(secretData)
+                ]).then(() => {
+                    alert("✨ تم تحديث العقار بنجاح!");
                     cancelEdit();
-                } else {
-                    const newRef = database.ref('properties').push();
-                    await newRef.set(propertyData);
-                    await database.ref('secret_properties/' + newRef.key).set(secretData);
+                }).catch(err => alert("خطأ بالتحديث: " + err.message));
+
+            } else {
+                const newRef = database.ref('properties').push();
+                newRef.set(propertyData).then(() => {
+                    database.ref('secret_properties/' + newRef.key).set(secretData);
                     alert("✅ تم حفظ ونشر العقار بنجاح في السحاب!");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
@@ -552,9 +544,7 @@
                         mapPicker.removeLayer(currentMarker);
                         currentMarker = null;
                     }
-                }
-            } catch (err) {
-                alert("حدث خطأ أثناء الحفظ: " + err.message);
+                }).catch(err => alert("خطأ بالحفظ: " + err.message));
             }
         });
     </script>
