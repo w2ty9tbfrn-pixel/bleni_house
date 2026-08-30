@@ -146,15 +146,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label>نوع العقار</label>
+                    <label>نوع العقار وحالته</label>
                     <select id="type" class="form-control" required>
-                        <option value="شقة">شقة (دبوس أزرق)</option>
+                        <option value="شقة سوبر ديلوكس">شقة سوبر ديلوكس (دبوس أزرق)</option>
                         <option value="فيلا">فيلا (دبوس أحمر)</option>
-                        <option value="بيت">بيت مستقل (دبوس برتقالي)</option>
+                        <option value="بيت مستقل">بيت مستقل (دبوس برتقالي)</option>
                         <option value="مزرعة">مزرعة (دبوس أخضر)</option>
                         <option value="أرض">أرض (دبوس بني)</option>
                         <option value="محضر">محضر (دبوس رمادي)</option>
-                        <option value="استثمار">مشروع استثماري (دبوس ذهبي)</option>
+                        <option value="مشروع استثماري">مشروع استثماري (دبوس ذهبي)</option>
                     </select>
                 </div>
 
@@ -164,13 +164,41 @@
                 </div>
 
                 <div class="form-group">
-                    <label>التقسيم / عدد الغرف</label>
-                    <input type="text" id="layout" class="form-control" placeholder="مثال: 3 غرف وصالون" required>
+                    <label>التقسيم (الغرف والصالون والمنتفعات)</label>
+                    <input type="text" id="layout" class="form-control" placeholder="مثال: غرفتين وصالون ومنتفعات" required>
                 </div>
 
                 <div class="form-group">
-                    <label>السعر</label>
-                    <input type="text" id="price" class="form-control" placeholder="مثال: 50,000 $" required>
+                    <label>السند القانوني (طابو، حكم، إلخ...)</label>
+                    <select id="legalStatus" class="form-control" required>
+                        <option value="طابو أخضر">طابو أخضر</option>
+                        <option value="حكم محكمة">حكم محكمة</option>
+                        <option value="كاتب عدل">كاتب عدل</option>
+                        <option value="طابو زراعي">طابو زراعي</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>السعر وحالة البازار</label>
+                    <input type="text" id="price" class="form-control" placeholder="مثال: 50,000 $ (في بازار)" required>
+                </div>
+
+                <div class="form-group">
+                    <label>حالة السوق / البازار</label>
+                    <select id="bazarStatus" class="form-control" required>
+                        <option value="قابل للتفاوض (في بازار)">قابل للتفاوض (في بازار)</option>
+                        <option value="سعر نهائي">سعر نهائي</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>موقع العقار (المنطقة / الحي)</label>
+                    <input type="text" id="location" class="form-control" placeholder="مثال: دمر، الشرفة" required>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظة العقار (إطلالة، كساء، إلخ...)</label>
+                    <input type="text" id="notes" class="form-control" placeholder="مثال: بحاجة لكساء خفيف، إطلالة رائعة">
                 </div>
 
                 <div class="form-group">
@@ -249,7 +277,6 @@
             currentMarker = L.marker([lat, lng]).addTo(mapPicker);
         });
 
-        // تم ربط رابط قاعدة البيانات الخاص بك هنا تلقائياً
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
@@ -285,12 +312,26 @@
             const imageData = await readFileAsDataURL(imgFile);
             const vData = await readFileAsDataURL(vFile);
 
+            const typeValue = document.getElementById('type').value;
+            let generalType = 'شقة';
+            if (typeValue.includes('فيلا')) generalType = 'فيلا';
+            else if (typeValue.includes('بيت')) generalType = 'بيت';
+            else if (typeValue.includes('مزرعة')) generalType = 'مزرعة';
+            else if (typeValue.includes('أرض')) generalType = 'أرض';
+            else if (typeValue.includes('محضر')) generalType = 'محضر';
+            else if (typeValue.includes('استثمار')) generalType = 'استثمار';
+
             const newProperty = {
                 propertyId: document.getElementById('propertyId').value,
-                type: document.getElementById('type').value,
+                type: typeValue,
+                generalType: generalType,
                 area: document.getElementById('area').value,
                 layout: document.getElementById('layout').value,
+                legalStatus: document.getElementById('legalStatus').value,
                 price: document.getElementById('price').value,
+                bazarStatus: document.getElementById('bazarStatus').value,
+                location: document.getElementById('location').value,
+                notes: document.getElementById('notes').value,
                 whatsappNumber: document.getElementById('whatsappNumber').value,
                 lat: parseFloat(lat),
                 lng: parseFloat(lng),
@@ -309,7 +350,7 @@
             const newRef = database.ref('properties').push();
             newRef.set(newProperty).then(() => {
                 database.ref('secret_properties/' + newRef.key).set(secretData);
-                alert("✅ تم رفع الصورة والفيديو وحفظ العقار بنجاح في السحاب!");
+                alert("✅ تم حفظ ونشر العقار بنجاح في السحاب!");
                 document.getElementById('property-form').reset();
                 document.getElementById('whatsappNumber').value = "963949041251";
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
