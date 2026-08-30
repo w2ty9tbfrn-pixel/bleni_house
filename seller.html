@@ -29,6 +29,11 @@
             color: var(--text-dark);
         }
 
+        /* إخفاء دبابيس معالم جوجل الافتراضية وإبقاء الأسماء */
+        .leaflet-marker-icon:not(.custom-picker-pin) {
+            display: none !important;
+        }
+
         .app-header {
             position: fixed;
             top: 0;
@@ -342,8 +347,8 @@
         function initPickerMap() {
             mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
-            // استخدام الأقمار الصناعية النقية بدون أي تسميات أو دبابيس خارجية
-            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            // خريطة هجينة تعرض الأسماء مع تفعيل الفلترة لإخفاء دبابيس المعالم الافتراضية
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; Google Maps'
@@ -359,7 +364,14 @@
                 if (currentMarker) {
                     mapPicker.removeLayer(currentMarker);
                 }
-                currentMarker = L.marker([lat, lng]).addTo(mapPicker);
+                currentMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        html: `<div style="background:#1b3b2b; width:16px; height:16px; border:2px solid #fff; border-radius:50%; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>`,
+                        className: 'custom-picker-pin',
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    })
+                }).addTo(mapPicker);
             });
         }
 
@@ -442,7 +454,14 @@
             if (prop.lat && prop.lng) {
                 mapPicker.setView([prop.lat, prop.lng], 15);
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
-                currentMarker = L.marker([prop.lat, prop.lng]).addTo(mapPicker);
+                currentMarker = L.marker([prop.lat, prop.lng], {
+                    icon: L.divIcon({
+                        html: `<div style="background:#1b3b2b; width:16px; height:16px; border:2px solid #fff; border-radius:50%; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>`,
+                        className: 'custom-picker-pin',
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    })
+                }).addTo(mapPicker);
             }
 
             document.getElementById('formTitleText').innerText = "2. تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
