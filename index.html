@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>بلان هاوس | Bleni House</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --primary-green: #1b3b2b;
@@ -389,26 +388,13 @@
         <div class="legend-item"><span class="legend-color" style="background: #ffc107;"></span> مشروع استثماري</div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- استدعاء خريطة جوجل الرسمية -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
-
-        // الخريطة المختلطة (Hybrid): قمر صناعي حقيقي (يظهر المباني والبيوت والأرض) + طبقة أسماء الشوارع والمناطق فوقه
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            attribution: 'Tiles &copy; Esri'
-        }).addTo(map);
-
-        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            opacity: 0.95
-        }).addTo(map);
-
-        L.control.zoom({ position: 'topleft' }).addTo(map);
-
+        let map;
         const pinColors = {
             'شقة عادية': '#00bfff',
             'شقة سوبر ديلوكس': '#007bff',
@@ -421,19 +407,17 @@
             'مشروع استثماري': '#ffc107'
         };
 
-        function createCustomIcon(type) {
-            const color = pinColors[type] || '#1b3b2b';
-            const svgIcon = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-                    <path fill="${color}" stroke="#ffffff" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                </svg>`;
-            return L.divIcon({
-                html: svgIcon,
-                className: '',
-                iconSize: [32, 32],
-                iconAnchor: [16, 32],
-                popupAnchor: [0, -32]
+        function initMap() {
+            // تفعيل خريطة جوجل بوضع الهجين (Hybrid) لتظهر الأبنية والأقمار الصناعية ومعها أسماء المحافظات والمناطق والحارات بدقة جوجل الأصلية
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 33.5138, lng: 36.2765 },
+                zoom: 13,
+                mapTypeId: 'hybrid',
+                disableDefaultUI: false,
+                zoomControl: true
             });
+
+            initFirebaseListener();
         }
 
         const firebaseConfig = {
@@ -456,54 +440,74 @@
             document.getElementById('videoModal').style.display = 'none';
         }
 
-        database.ref('properties').on('child_added', (snapshot) => {
-            const data = snapshot.val();
-            if (data && data.lat && data.lng) {
-                const marker = L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type || 'شقة سوبر ديلوكس') }).addTo(map);
+        function initFirebaseListener() {
+            database.ref('properties').on('child_added', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.lat && data.lng) {
+                    const color = pinColors[data.type || 'شقة سوبر ديلوكس'] || '#1b3b2b';
+                    
+                    // تصميم علامة دقيقة باستخدام SVG
+                    const svgMarker = {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                                <path fill="${color}" stroke="#ffffff" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                        `),
+                        scaledSize: new google.maps.Size(32, 32),
+                        anchor: new google.maps.Point(16, 32)
+                    };
 
-                marker.on('click', function() {
-                    map.setView([data.lat, data.lng], map.getZoom(), {
-                        animate: true,
-                        duration: 0.6
+                    const marker = new google.maps.Marker({
+                        position: { lat: parseFloat(data.lat), lng: parseFloat(data.lng) },
+                        map: map,
+                        icon: svgMarker
                     });
 
-                    document.getElementById('modalImg').src = data.image || '';
-                    document.getElementById('modalPrice').innerText = data.price || '';
-                    document.getElementById('modalLocation').innerText = '📍 ' + (data.location || 'الموقع غير محدد');
-                    document.getElementById('modalType').innerText = data.type || '';
-                    document.getElementById('modalArea').innerText = (data.area || '') + ' م²';
-                    document.getElementById('modalLayout').innerText = data.layout || '';
-                    document.getElementById('modalLegal').innerText = data.legalStatus || '';
-                    document.getElementById('modalBazar').innerText = data.bazarStatus || '';
+                    marker.addListener('click', function() {
+                        map.panTo(marker.getPosition());
+                        map.setZoom(16);
 
-                    const notesContainer = document.getElementById('modalNotesContainer');
-                    if (data.notes) {
-                        document.getElementById('modalNotes').innerText = data.notes;
-                        notesContainer.style.display = 'block';
-                    } else {
-                        notesContainer.style.display = 'none';
-                    }
+                        document.getElementById('modalImg').src = data.image || '';
+                        document.getElementById('modalPrice').innerText = data.price || '';
+                        document.getElementById('modalLocation').innerText = '📍 ' + (data.location || 'الموقع غير محدد');
+                        document.getElementById('modalType').innerText = data.type || '';
+                        document.getElementById('modalArea').innerText = (data.area || '') + ' م²';
+                        document.getElementById('modalLayout').innerText = data.layout || '';
+                        document.getElementById('modalLegal').innerText = data.legalStatus || '';
+                        document.getElementById('modalBazar').innerText = data.bazarStatus || '';
 
-                    const phoneNum = data.whatsappNumber || '963949041251';
-                    document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}`;
+                        const notesContainer = document.getElementById('modalNotesContainer');
+                        if (data.notes) {
+                            document.getElementById('modalNotes').innerText = data.notes;
+                            notesContainer.style.display = 'block';
+                        } else {
+                            notesContainer.style.display = 'none';
+                        }
 
-                    const videoBtn = document.getElementById('modalVideoBtn');
-                    if (data.video) {
-                        videoBtn.style.display = 'block';
-                        videoBtn.onclick = function() {
-                            const vPlayer = document.getElementById('activeVideoPlayer');
-                            vPlayer.src = data.video;
-                            document.getElementById('videoModal').style.display = 'flex';
-                            vPlayer.play();
-                        };
-                    } else {
-                        videoBtn.style.display = 'none';
-                    }
+                        const phoneNum = data.whatsappNumber || '963949041251';
+                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}`;
 
-                    document.getElementById('propertyModal').style.display = 'flex';
-                });
-            }
-        });
+                        const videoBtn = document.getElementById('modalVideoBtn');
+                        if (data.video) {
+                            videoBtn.style.display = 'block';
+                            videoBtn.onclick = function() {
+                                const vPlayer = document.getElementById('activeVideoPlayer');
+                                vPlayer.src = data.video;
+                                document.getElementById('videoModal').style.display = 'flex';
+                                vPlayer.play();
+                            };
+                        } else {
+                            videoBtn.style.display = 'none';
+                        }
+
+                        document.getElementById('propertyModal').style.display = 'flex';
+                    });
+                }
+            });
+        }
+
+        // تشغيل خريطة جوجل عند تحميل الصفحة
+        window.onload = initMap;
     </script>
 </body>
 </html>
