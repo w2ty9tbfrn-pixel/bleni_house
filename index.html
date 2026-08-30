@@ -63,85 +63,184 @@
             z-index: 1;
         }
 
+        /* زر الاتصال السريع المنبثق على اليمين */
+        .quick-call-widget {
+            position: fixed;
+            right: 12px;
+            top: 75px;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            flex-direction: row-reverse;
+            gap: 6px;
+        }
+
+        .call-btn {
+            width: 38px;
+            height: 38px;
+            background-color: var(--primary-green);
+            border: 2px solid var(--accent-gold);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            text-decoration: none;
+        }
+
+        .call-number-pop {
+            background: rgba(27, 59, 43, 0.95);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border: 1px solid var(--accent-gold);
+            direction: ltr;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* تصغير مربع أنواع العقارات */
         .map-legend {
             position: fixed;
-            bottom: 20px;
-            left: 15px;
+            bottom: 15px;
+            left: 10px;
             background: rgba(27, 59, 43, 0.92);
             color: #ffffff;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 0.75rem;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
             z-index: 999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             border: 1px solid var(--accent-gold);
             backdrop-filter: blur(4px);
+            max-width: 130px;
         }
 
         .legend-title {
             font-weight: bold;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             color: var(--accent-gold);
             border-bottom: 1px solid rgba(197, 160, 89, 0.3);
-            padding-bottom: 3px;
+            padding-bottom: 2px;
+            font-size: 0.7rem;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .legend-color {
-            width: 12px;
-            height: 12px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            margin-left: 8px;
+            margin-left: 6px;
             display: inline-block;
+            flex-shrink: 0;
+        }
+
+        /* تصميم فاخر وجذاب للبطاقة المنبثقة */
+        .leaflet-popup-content-wrapper {
+            padding: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            width: 280px !important;
         }
 
         .popup-card {
-            max-width: 260px;
             direction: rtl;
             text-align: right;
+            background: #ffffff;
         }
 
-        .popup-title {
-            font-size: 1rem;
+        .popup-header {
+            background: var(--primary-green);
+            color: #ffffff;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        .popup-header .title {
+            font-size: 0.95rem;
             font-weight: bold;
-            color: var(--primary-green);
-            margin-bottom: 5px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 3px;
         }
 
-        .popup-info {
-            font-size: 0.85rem;
-            color: var(--text-dark);
-            margin-bottom: 4px;
+        .popup-header .price-tag {
+            background: var(--accent-gold);
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
         }
 
-        .popup-media {
-            width: 100%;
-            max-height: 160px;
-            object-fit: cover;
+        .popup-body {
+            padding: 12px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            padding: 8px;
             border-radius: 6px;
-            margin: 6px 0;
+            border: 1px solid #eee;
+        }
+
+        .info-item {
+            font-size: 0.75rem;
+            color: var(--text-dark);
+        }
+
+        .info-item b {
+            color: var(--primary-green);
+        }
+
+        .media-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .media-gallery img, .media-gallery video {
+            width: 100%;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #ddd;
         }
 
         .whatsapp-btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             width: 100%;
             background-color: #25D366;
             color: white;
             text-align: center;
-            padding: 8px 0;
-            border-radius: 6px;
+            padding: 9px 0;
+            border-radius: 8px;
             text-decoration: none;
             font-weight: bold;
             font-size: 0.85rem;
-            margin-top: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-top: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
     </style>
 </head>
@@ -150,6 +249,15 @@
     <header class="app-header">
         <h1>بلان هاوس <span>| Bleni House</span></h1>
     </header>
+
+    <div class="quick-call-widget">
+        <a href="tel:+963949041251" class="call-btn" title="اتصال مباشر">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="#ffffff">
+                <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+            </svg>
+        </a>
+        <span class="call-number-pop">+963 949 041 251</span>
+    </div>
 
     <div id="map"></div>
 
@@ -165,11 +273,14 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script>
         const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
 
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.85 }).addTo(map);
 
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
@@ -198,43 +309,53 @@
             });
         }
 
-        function loadProperties() {
-            const properties = JSON.parse(localStorage.getItem('bleni_properties') || '[]');
-            properties.forEach(data => {
-                if (data.lat && data.lng) {
-                    let mediaHTML = '';
-                    if (data.mediaData) {
-                        if (data.mediaType && data.mediaType.startsWith('video')) {
-                            mediaHTML = `<video src="${data.mediaData}" controls class="popup-media"></video>`;
-                        } else {
-                            mediaHTML = `<img src="${data.mediaData}" class="popup-media" alt="صورة العقار" />`;
-                        }
-                    }
+        const firebaseConfig = {
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
 
-                    const phoneNum = data.whatsappNumber || '963949041251';
+        database.ref('properties').on('child_added', (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.lat && data.lng) {
+                let mediaContent = '';
+                if (data.image) {
+                    mediaContent += `<img src="${data.image}" alt="صورة العقار" />`;
+                }
+                if (data.video) {
+                    mediaContent += `<video src="${data.video}" controls></video>`;
+                }
 
-                    const popupContent = `
-                        <div class="popup-card">
-                            <div class="popup-title">عقار رقم: ${data.propertyId || 'غير محدد'}</div>
-                            <div class="popup-info"><b>النوع:</b> ${data.type}</div>
-                            <div class="popup-info"><b>المساحة:</b> ${data.area} م²</div>
-                            <div class="popup-info"><b>التقسيم:</b> ${data.layout}</div>
-                            <div class="popup-info"><b>السعر:</b> ${data.price}</div>
-                            ${mediaHTML}
+                const phoneNum = data.whatsappNumber || '963949041251';
+
+                const popupContent = `
+                    <div class="popup-card">
+                        <div class="popup-header">
+                            <span class="title">عقار رقم ${data.propertyId || ''}</span>
+                            <span class="price-tag">${data.price}</span>
+                        </div>
+                        <div class="popup-body">
+                            <div class="info-grid">
+                                <div class="info-item"><b>النوع:</b> ${data.type}</div>
+                                <div class="info-item"><b>المساحة:</b> ${data.area} م²</div>
+                                <div class="info-item" style="grid-column: span 2;"><b>التقسيم:</b> ${data.layout}</div>
+                            </div>
+                            ${mediaContent ? `<div class="media-gallery">${mediaContent}</div>` : ''}
                             <a href="https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}" target="_blank" class="whatsapp-btn">
                                 تواصل عبر الواتساب
                             </a>
                         </div>
-                    `;
+                    </div>
+                `;
 
-                    L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type) })
-                        .addTo(map)
-                        .bindPopup(popupContent);
-                }
-            });
-        }
-
-        loadProperties();
+                L.marker([data.lat, data.lng], { icon: createCustomIcon(data.type) })
+                    .addTo(map)
+                    .bindPopup(popupContent);
+            }
+        });
     </script>
 </body>
 </html>
