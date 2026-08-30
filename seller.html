@@ -134,11 +134,6 @@
             transition: background 0.2s;
         }
 
-        .btn-submit:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-
         .btn-cancel-edit {
             background-color: #6c757d;
             margin-top: 8px;
@@ -275,12 +270,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>1. اختيار صورة العقار 📷 (أي حجم مسموح)</label>
+                    <label>1. اختيار صورة العقار 📷</label>
                     <input type="file" id="imageFile" class="form-control" accept="image/*">
                 </div>
 
                 <div class="form-group">
-                    <label>2. اختيار فيديو العقار 🎥 (أي حجم مسموح)</label>
+                    <label>2. اختيار فيديو العقار 🎥</label>
                     <input type="file" id="videoFile" class="form-control" accept="video/*">
                 </div>
 
@@ -292,7 +287,7 @@
 
             <div class="card">
                 <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
-                <p style="font-size: 0.80rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة (خريطة جوجل الأصلية بكافة معالمها ودبابيسها لتسهيل الإسقاط):</p>
+                <p style="font-size: 0.8rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة:</p>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat" required>
                 <input type="hidden" id="lng" required>
@@ -330,11 +325,9 @@
         </div>
     </div>
 
-    <!-- مكتبات فايربيس (Realtime Database + Storage) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
         const SECRET_PASSWORD = "123456";
@@ -349,6 +342,7 @@
         function initPickerMap() {
             mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
+            // خريطة هجينة من Google (قمر صناعي + أسماء الأماكن والشوارع بوضوح تام)
             L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -374,26 +368,23 @@
         };
 
         const firebaseConfig = {
-            databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/",
-            storageBucket: "bleni-house.appspot.com" // رابط التخزين السحابي الخاص بك
+            databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
         
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const database = firebase.database();
-        const storage = firebase.storage();
 
         let allPropertiesCache = {};
 
-        // دالة رفع الملفات إلى Firebase Storage ودعم أي حجم
-        async function uploadFileToStorage(file, pathFolder) {
-            if (!file) return '';
-            const uniqueName = pathFolder + '/' + Date.now() + '_' + file.name;
-            const storageRef = storage.ref(uniqueName);
-            const snapshot = await storageRef.put(file);
-            const downloadURL = await snapshot.ref.getDownloadURL();
-            return downloadURL;
+        function readFileAsDataURL(file) {
+            return new Promise((resolve) => {
+                if (!file) return resolve('');
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
         }
 
         database.ref('properties').on('value', (snapshot) => {
@@ -496,60 +487,56 @@
                 return;
             }
 
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "جاري رفع الملفات وحفظ العقار... ⏳";
+            const editKey = document.getElementById('editKey').value;
+            const imgFile = document.getElementById('imageFile').files[0];
+            const vFile = document.getElementById('videoFile').files[0];
 
-            try {
-                const editKey = document.getElementById('editKey').value;
-                const imgFile = document.getElementById('imageFile').files[0];
-                const vFile = document.getElementById('videoFile').files[0];
+            let imageData = imgFile ? await readFileAsDataURL(imgFile) : '';
+            let vData = vFile ? await readFileAsDataURL(vFile) : '';
 
-                let imageUrl = imgFile ? await uploadFileToStorage(imgFile, 'property_images') : '';
-                let videoUrl = vFile ? await uploadFileToStorage(vFile, 'property_videos') : '';
+            if (editKey && allPropertiesCache[editKey]) {
+                if (!imageData) imageData = allPropertiesCache[editKey].image || '';
+                if (!vData) vData = allPropertiesCache[editKey].video || '';
+            }
 
-                if (editKey && allPropertiesCache[editKey]) {
-                    if (!imageUrl) imageUrl = allPropertiesCache[editKey].image || '';
-                    if (!videoUrl) videoUrl = allPropertiesCache[editKey].video || '';
-                }
+            const propertyData = {
+                propertyId: document.getElementById('propertyId').value,
+                type: document.getElementById('type').value,
+                area: document.getElementById('area').value,
+                layout: document.getElementById('layout').value,
+                legalStatus: document.getElementById('legalStatus').value,
+                price: document.getElementById('price').value,
+                bazarStatus: document.getElementById('bazarStatus').value,
+                location: document.getElementById('location').value,
+                notes: document.getElementById('notes').value,
+                whatsappNumber: document.getElementById('whatsappNumber').value,
+                lat: parseFloat(lat),
+                lng: parseFloat(lng),
+                image: imageData,
+                video: vData
+            };
 
-                const propertyData = {
-                    propertyId: document.getElementById('propertyId').value,
-                    type: document.getElementById('type').value,
-                    area: document.getElementById('area').value,
-                    layout: document.getElementById('layout').value,
-                    legalStatus: document.getElementById('legalStatus').value,
-                    price: document.getElementById('price').value,
-                    bazarStatus: document.getElementById('bazarStatus').value,
-                    location: document.getElementById('location').value,
-                    notes: document.getElementById('notes').value,
-                    whatsappNumber: document.getElementById('whatsappNumber').value,
-                    lat: parseFloat(lat),
-                    lng: parseFloat(lng),
-                    image: imageUrl,
-                    video: videoUrl
-                };
+            const secretData = {
+                propertyId: document.getElementById('propertyId').value,
+                ownerName: document.getElementById('ownerName').value,
+                ownerPhone: document.getElementById('ownerPhone').value,
+                photographer: document.getElementById('photographer').value,
+                commission: document.getElementById('commission').value
+            };
 
-                const secretData = {
-                    propertyId: document.getElementById('propertyId').value,
-                    ownerName: document.getElementById('ownerName').value,
-                    ownerPhone: document.getElementById('ownerPhone').value,
-                    photographer: document.getElementById('photographer').value,
-                    commission: document.getElementById('commission').value
-                };
-
-                if (editKey) {
-                    await Promise.all([
-                        database.ref('properties/' + editKey).update(propertyData),
-                        database.ref('secret_properties/' + editKey).update(secretData)
-                    ]);
+            if (editKey) {
+                Promise.all([
+                    database.ref('properties/' + editKey).update(propertyData),
+                    database.ref('secret_properties/' + editKey).update(secretData)
+                ]).then(() => {
                     alert("✨ تم تحديث العقار بنجاح!");
                     cancelEdit();
-                } else {
-                    const newRef = database.ref('properties').push();
-                    await newRef.set(propertyData);
-                    await database.ref('secret_properties/' + newRef.key).set(secretData);
-                    
+                }).catch(err => alert("خطأ بالتحديث: " + err.message));
+
+            } else {
+                const newRef = database.ref('properties').push();
+                newRef.set(propertyData).then(() => {
+                    database.ref('secret_properties/' + newRef.key).set(secretData);
                     alert("✅ تم حفظ ونشر العقار بنجاح في السحاب!");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
@@ -557,12 +544,7 @@
                         mapPicker.removeLayer(currentMarker);
                         currentMarker = null;
                     }
-                }
-            } catch (err) {
-                alert("حدث خطأ أثناء الرفع أو الحفظ: " + err.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار الآن 🔄" : "حفظ ونشر العقار فوراً 🚀";
+                }).catch(err => alert("خطأ بالحفظ: " + err.message));
             }
         });
     </script>
