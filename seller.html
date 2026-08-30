@@ -117,6 +117,7 @@
             border-radius: 8px;
             margin-top: 8px;
             border: 1px solid #ccc;
+            z-index: 1;
         }
 
         .btn-submit {
@@ -286,7 +287,7 @@
 
             <div class="card">
                 <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
-                <p style="font-size: 0.8rem; color: #666;">اضغط على الخريطة لتحديد الموقع (تظهر تفاصيل المباني، الشوارع، وأسماء المناطق):</p>
+                <p style="font-size: 0.8rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة:</p>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat" required>
                 <input type="hidden" id="lng" required>
@@ -336,30 +337,34 @@
             document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>غير مصرح بالدخول</h2>";
         }
 
-        const mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
-        
-        // الخريطة المختلطة (Hybrid) في لوحة المالك
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            attribution: 'Tiles &copy; Esri'
-        }).addTo(mapPicker);
+        let mapPicker, currentMarker = null;
 
-        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            opacity: 0.95
-        }).addTo(mapPicker);
+        function initPickerMap() {
+            mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
-        let currentMarker = null;
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '&copy; Google Maps'
+            }).addTo(mapPicker);
 
-        mapPicker.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            document.getElementById('lat').value = lat;
-            document.getElementById('lng').value = lng;
+            mapPicker.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                document.getElementById('lat').value = lat;
+                document.getElementById('lng').value = lng;
 
-            if (currentMarker) mapPicker.removeLayer(currentMarker);
-            currentMarker = L.marker([lat, lng]).addTo(mapPicker);
-        });
+                if (currentMarker) {
+                    mapPicker.removeLayer(currentMarker);
+                }
+                currentMarker = L.marker([lat, lng]).addTo(mapPicker);
+            });
+        }
+
+        window.onload = function() {
+            initPickerMap();
+        };
 
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
@@ -453,7 +458,10 @@
             document.getElementById('formTitleText').innerText = "1. إضافة عقار جديد";
             document.getElementById('submitBtn').innerText = "حفظ ونشر العقار فوراً 🚀";
             document.getElementById('cancelEditBtn').style.display = 'none';
-            if (currentMarker) mapPicker.removeLayer(currentMarker);
+            if (currentMarker) {
+                mapPicker.removeLayer(currentMarker);
+                currentMarker = null;
+            }
         };
 
         window.deleteProperty = function(key) {
@@ -531,7 +539,10 @@
                     alert("✅ تم حفظ ونشر العقار بنجاح في السحاب!");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
-                    if (currentMarker) mapPicker.removeLayer(currentMarker);
+                    if (currentMarker) {
+                        mapPicker.removeLayer(currentMarker);
+                        currentMarker = null;
+                    }
                 }).catch(err => alert("خطأ بالحفظ: " + err.message));
             }
         });
