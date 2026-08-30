@@ -396,10 +396,15 @@
     <script>
         const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
 
-        // استخدام طبقة الخريطة القياسية المفصلة (تظهر أسماء الشوارع، المدن، والمناطق بوضوح مثل خرائط جوجل)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // الخريطة المختلطة (Hybrid): قمر صناعي حقيقي (يظهر المباني والبيوت والأرض) + طبقة أسماء الشوارع والمناطق فوقه
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map);
+
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            opacity: 0.95
         }).addTo(map);
 
         L.control.zoom({ position: 'topleft' }).addTo(map);
