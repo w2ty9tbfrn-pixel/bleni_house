@@ -394,10 +394,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // استخدام طبقات جوجل الهجينة (Google Hybrid) الرسمية لتظهر الأبنية والأسماء والمحافظات تماماً مثل خرائط جوجل بدون أي مفتاح معقد
+        // استخدام الأقمار الصناعية النقية (Satellite Only) بدون أي تسميات أو دبابيس خارجية
         const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
 
-        L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+        L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
