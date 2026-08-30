@@ -169,7 +169,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>السند القانوني (طابو، حكم، إلخ...)</label>
+                    <label>السند القانوني</label>
                     <select id="legalStatus" class="form-control" required>
                         <option value="طابو أخضر">طابو أخضر</option>
                         <option value="حكم محكمة">حكم محكمة</option>
@@ -179,8 +179,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label>السعر وحالة البازار</label>
-                    <input type="text" id="price" class="form-control" placeholder="مثال: 50,000 $ (في بازار)" required>
+                    <label>السعر</label>
+                    <input type="text" id="price" class="form-control" placeholder="مثال: 50,000 $" required>
                 </div>
 
                 <div class="form-group">
@@ -255,7 +255,7 @@
 
     <script>
         const SECRET_PASSWORD = "123456";
-        let userPass = prompt("أدخل كلمة السر للدخول لوجهة المالك:");
+        let userPass = prompt("أدخل كلمة السر للدخول لوحة المالك:");
         if (userPass !== SECRET_PASSWORD) {
             alert("كلمة السر خاطئة!");
             document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>غير مصرح بالدخول</h2>";
