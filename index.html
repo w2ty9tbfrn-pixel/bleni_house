@@ -141,7 +141,7 @@
             flex-shrink: 0;
         }
 
-        /* تصميم فاخر وجذاب للبطاقة المنبثقة */
+        /* تصميم البطاقة المنبثقة */
         .leaflet-popup-content-wrapper {
             padding: 0;
             border-radius: 12px;
@@ -309,8 +309,9 @@
             });
         }
 
+        // تم ربط رابط قاعدة البيانات الخاص بك هنا تلقائياً
         const firebaseConfig = {
-            databaseURL: "YOUR_FIREBASE_DATABASE_URL"
+            databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
         
         if (!firebase.apps.length) {
