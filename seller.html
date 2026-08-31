@@ -362,9 +362,9 @@
         }
 
         function initPickerMap() {
-            mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 11);
+            mapPicker = L.map('map-picker').setView([33.48, 36.25], 10);
 
-            L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; Google Maps'
@@ -402,7 +402,7 @@
         };
 
         const firebaseConfig = {
-            databaseURL: "https://bleni-house-eaef6-default-rtdb.firebaseio.com/"
+            databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
         
         if (!firebase.apps.length) {
@@ -507,14 +507,6 @@
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
                 currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
-
-            database.ref('secret_properties/' + key).once('value', (secSnap) => {
-                const sec = secSnap.val() || {};
-                document.getElementById('ownerName').value = sec.ownerName || '';
-                document.getElementById('ownerPhone').value = sec.ownerPhone || '';
-                document.getElementById('photographer').value = sec.photographer || '';
-                document.getElementById('commission').value = sec.commission || '';
-            });
 
             document.getElementById('formTitleText').innerText = "تعديل العقار السحابي (رقم: " + prop.propertyId + ")";
             document.getElementById('submitBtn').innerText = "تحديث العقار على السحاب 🔄";
