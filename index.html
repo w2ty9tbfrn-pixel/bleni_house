@@ -81,10 +81,12 @@
             background: #111;
         }
 
+        /* ضمان بقاء دبابيس العقارات في طبقة علوية بارزة جداً فوق كل عناصر الخريطة */
         .leaflet-marker-pane {
             z-index: 700 !important;
         }
 
+        /* تنسيق أسماء المناطق بخط أبيض وتختفي عند الاقتراب الشديد */
         .region-label {
             background: transparent;
             border: none;
@@ -472,7 +474,7 @@
                 <select id="filterLegal">
                     <option value="">الكل</option>
                     <option value="طابو أخضر">طابو أخضر</option>
-                    <option value="ح حكم محكمة">حكم محكمة</option>
+                    <option value="ح حكم محكمة">ح حكم محكمة</option>
                     <option value="رخصة بناء">رخصة بناء</option>
                     <option value="طابو زراعي">طابو زراعي</option>
                 </select>
@@ -612,19 +614,18 @@
             'مشروع استثماري': '#ffc107'
         };
 
-        // حجم طبيعي وأنيق للدبابيس (واضح للمالك والمشتري وغير مزعج)
         function createCustomIcon(type) {
             const color = pinColors[type] || '#1b3b2b';
             const svgIcon = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.6));">
-                    <path fill="${color}" stroke="#ffffff" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" style="filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.8));">
+                    <path fill="${color}" stroke="#ffffff" stroke-width="2.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>`;
             return L.divIcon({
                 html: svgIcon,
                 className: '',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28]
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -36]
             });
         }
 
@@ -640,18 +641,8 @@
         let allProperties = {};
         const activeMarkersGroup = L.layerGroup().addTo(map);
 
-        let selectedPropertyCoords = null; // لحفظ إحداثيات العقار المختار للتركيز عليه عند الإغلاق
-
         function closeModal() {
             document.getElementById('propertyModal').style.display = 'none';
-            
-            // عند إغلاق نافذة التفاصيل، الانتقال الفوري بأقصى زووم (20) فوق العقار تماماً
-            if (selectedPropertyCoords) {
-                map.setView([selectedPropertyCoords.lat, selectedPropertyCoords.lng], 20, {
-                    animate: true,
-                    duration: 0.8
-                });
-            }
         }
 
         function openFilterModal() {
@@ -686,7 +677,7 @@
 
                     if (count > 1) {
                         const angle = (index / count) * 2 * Math.PI;
-                        const radius = 0.00012 * index; 
+                        const radius = 0.00015 * index; 
                         displayLat += radius * Math.cos(angle);
                         displayLng += radius * Math.sin(angle);
                     }
@@ -697,13 +688,9 @@
                     });
 
                     marker.on('click', function() {
-                        // حفظ الإحداثيات الأصلية للعقار
-                        selectedPropertyCoords = { lat: prop.lat, lng: prop.lng };
-
-                        // عند النقر تقريب الخريطة نحو العقار مباشرة
-                        map.setView([prop.lat, prop.lng], 16, {
+                        map.setView([prop.lat, prop.lng], 20, {
                             animate: true,
-                            duration: 0.5
+                            duration: 0.6
                         });
 
                         document.getElementById('modalImg').src = prop.image || '';
