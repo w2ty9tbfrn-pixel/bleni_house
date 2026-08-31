@@ -81,7 +81,7 @@
             background: #111;
         }
 
-        /* تنسيق أسماء المحافظات والأرياف بخط أبيض وتختفي عند الاقتراب */
+        /* تنسيق أسماء المحافظات والبلدات بخط أبيض وتختفي عند الاقتراب الشديد */
         .region-label {
             background: transparent;
             border: none;
@@ -531,39 +531,44 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // الاسقاط الأولي (الافتتاحي) على دمشق وريفها وتحديداً جديدة عرطوز البلد والفضل
-        const map = L.map('map', { zoomControl: true }).setView([33.4535, 36.1420], 12);
+        // الإسقاط الافتراضي مطابق تماماً للصورة التي أرسلتها (مركّز على دمشق وجديدة عرطوز والريف بمستوى زووم مرن ودقيق)
+        const map = L.map('map', { 
+            zoomControl: true,
+            minZoom: 3,  // تتيح لك الابتعاد لرؤية كل سوريا (مثل خرائط جوجل)
+            maxZoom: 20  // تتيح لك الاقتراب لأعلى مستوى وضوح ممكن
+        }).setView([33.4350, 36.1900], 11);
 
-        // طبقة الأقمار الصناعية الصافية من جوجل
+        // طبقة الأقمار الصناعية الصافية من جوجل بجودة فائقة
         L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
         }).addTo(map);
 
-        // قائمة شاملة لكافة المحافظات والأرياف السورية معاً وبأماكنها الصحيحة
+        // قائمة المحافظات والبلدات الدقيقة مطابقة لروابطك والواقع الجغرافي تماماً
         const regionsData = [
             { name: "دمشق", lat: 33.5138, lng: 36.2765 },
             { name: "ريف دمشق", lat: 33.6200, lng: 36.5000 },
-            { name: "جديدة عرطوز البلد", lat: 33.4610, lng: 36.1320 },
-            { name: "جديدة عرطوز الفضل", lat: 33.4420, lng: 36.1550 },
+            { name: "جديدة عرطوز البلد", lat: 33.4285, lng: 36.1412 },
+            { name: "جديدة عرطوز الفضل", lat: 33.4150, lng: 36.1620 },
+            { name: "عرطوز", lat: 33.4410, lng: 36.1150 },
             { name: "قطنا", lat: 33.4475, lng: 36.0792 },
+            { name: "دروشا", lat: 33.3980, lng: 36.2100 },
+            { name: "المعضمية", lat: 33.4830, lng: 36.2200 },
+            { name: "الكسوة", lat: 33.3550, lng: 36.2420 },
+            { name: "الديرخبية", lat: 33.3320, lng: 36.1750 },
             { name: "القنيطرة", lat: 33.1250, lng: 35.8250 },
             { name: "درعا", lat: 32.6186, lng: 36.1050 },
-            { name: "ريف درعا", lat: 32.8200, lng: 36.2200 },
             { name: "السويداء", lat: 32.7093, lng: 36.5631 },
             { name: "حمص", lat: 34.7324, lng: 36.7137 },
-            { name: "ريف حمص / تدمر", lat: 34.5623, lng: 38.2774 },
+            { name: "تدمر", lat: 34.5588, lng: 38.2858 },
             { name: "حماة", lat: 35.1318, lng: 36.7578 },
-            { name: "ريف حماة", lat: 35.3000, lng: 36.5000 },
             { name: "إدلب", lat: 35.9306, lng: 36.6339 },
             { name: "حلب", lat: 36.2021, lng: 37.1343 },
-            { name: "ريف حلب", lat: 36.3500, lng: 37.3500 },
             { name: "اللاذقية", lat: 35.5317, lng: 35.7915 },
             { name: "طرطوس", lat: 34.8890, lng: 35.8866 },
             { name: "الرقة", lat: 35.9559, lng: 39.0094 },
             { name: "دير الزور", lat: 35.3359, lng: 40.1488 },
-            { name: "ريف دير الزور", lat: 35.2000, lng: 40.3500 },
             { name: "الحسكة", lat: 36.5023, lng: 40.7441 }
         ];
 
@@ -579,10 +584,10 @@
             regionLayers.push(rMarker);
         });
 
-        // دالة إخفاء أسماء المحافظات والأرياف تلقائياً عندما يقترب المستخدم (زووم أكبر من 11) ليبقى التركيز حصرياً على العقارات
+        // دالة إخفاء أسماء المحافظات والبلدات عند الاقتراب الشديد (تركيز حصري على العقارات)
         function updateRegionsVisibility() {
             const currentZoom = map.getZoom();
-            if (currentZoom <= 11) {
+            if (currentZoom <= 12) {
                 regionLayers.forEach(marker => {
                     if (!map.hasLayer(marker)) map.addLayer(marker);
                 });
@@ -647,13 +652,12 @@
             document.getElementById('filterModal').style.display = 'none';
         }
 
-        // خوارزمية هندسية ذكية (شكل القوس/الوردة عند التباعد) لمنع تداخل أو اختفاء الدبابيس دون تغيير مواقعها الإحداثية الأساسية الحقيقية
+        // خوارزمية هندسية لمنع تداخل أو اختفاء الدبابيس المتطابقة مع الحفاظ على دقة المواقع الأصلية
         function renderProperties(properties) {
             activeMarkersGroup.clearLayers();
 
             const propsArray = Object.keys(properties).map(k => ({ key: k, ...properties[k] })).filter(p => p && p.lat && p.lng);
             
-            // تجميع العقارات حسب الإحداثيات المتطابقة تماماً أو المتقاربة جداً لمعالجة التداخل عند الزووم البعيد
             const coordinateGroups = {};
             propsArray.forEach(prop => {
                 const coordKey = `${Number(prop.lat).toFixed(4)}_${Number(prop.lng).toFixed(4)}`;
@@ -671,10 +675,9 @@
                     let displayLat = Number(prop.lat);
                     let displayLng = Number(prop.lng);
 
-                    // إذا كان هناك أكثر من عقار في نفس النقطة تماماً، نقوم بعمل تفرع هندسي مؤقت (على شكل قوس/وردة) فقط عند التباعد أو التطابق التام، ويمكن إزالتها أو تعديلها حسب الحاجة البصرية
                     if (count > 1) {
                         const angle = (index / count) * 2 * Math.PI;
-                        const radius = 0.00018 * index; // شعاع بسيط جداً لا يؤثر على مصداقية الموقع الحقيقي
+                        const radius = 0.00015 * index; 
                         displayLat += radius * Math.cos(angle);
                         displayLng += radius * Math.sin(angle);
                     }
@@ -739,7 +742,7 @@
             const targetPrice = priceInput ? parseFloat(priceInput) : null;
 
             const filtered = {};
-            Object.keys(allProperties).forEach(key => {
+            Object.keys(allProperties).keys && Object.keys(allProperties).forEach(key => {
                 const prop = allProperties[key];
                 if (!prop) return;
 
