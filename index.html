@@ -134,46 +134,6 @@
             background-color: var(--primary-green) !important;
         }
 
-        .map-legend {
-            position: fixed;
-            bottom: 15px;
-            left: 10px;
-            background: rgba(27, 59, 43, 0.92);
-            color: #ffffff;
-            padding: 6px 8px;
-            border-radius: 6px;
-            font-size: 0.62rem;
-            z-index: 999;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            border: 1px solid var(--accent-gold);
-            backdrop-filter: blur(4px);
-            max-width: 145px;
-        }
-
-        .legend-title {
-            font-weight: bold;
-            margin-bottom: 4px;
-            color: var(--accent-gold);
-            border-bottom: 1px solid rgba(197, 160, 89, 0.3);
-            padding-bottom: 2px;
-            font-size: 0.65rem;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px;
-        }
-
-        .legend-color {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            margin-left: 5px;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-
         .filter-modal-overlay {
             position: fixed;
             top: 0;
@@ -505,19 +465,6 @@
         </div>
     </div>
 
-    <div class="map-legend">
-        <div class="legend-title">أنواع العقارات</div>
-        <div class="legend-item"><span class="legend-color" style="background: #00bfff;"></span> شقة عادية</div>
-        <div class="legend-item"><span class="legend-color" style="background: #007bff;"></span> شقة سوبر ديلوكس</div>
-        <div class="legend-item"><span class="legend-color" style="background: #6c757d;"></span> شقة على العظم</div>
-        <div class="legend-item"><span class="legend-color" style="background: #dc3545;"></span> فيلا</div>
-        <div class="legend-item"><span class="legend-color" style="background: #fd7e14;"></span> بيت مستقل</div>
-        <div class="legend-item"><span class="legend-color" style="background: #28a745;"></span> مزرعة</div>
-        <div class="legend-item"><span class="legend-color" style="background: #795548;"></span> أرض</div>
-        <div class="legend-item"><span class="legend-color" style="background: #343a40;"></span> محضر</div>
-        <div class="legend-item"><span class="legend-color" style="background: #ffc107;"></span> مشروع استثماري</div>
-    </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -535,23 +482,13 @@
             attribution: '&copy; Google Maps'
         }).addTo(map);
 
-        const pinColors = {
-            'شقة عادية': '#00bfff',
-            'شقة سوبر ديلوكس': '#007bff',
-            'شقة على العظم': '#6c757d',
-            'فيلا': '#dc3545',
-            'بيت مستقل': '#fd7e14',
-            'مزرعة': '#28a745',
-            'أرض': '#795548',
-            'محضر': '#343a40',
-            'مشروع استثماري': '#ffc107'
-        };
+        // لون موحد واضح لجميع العقارات (أصفر ذهبي ساطع يبرز بقوة فوق الخريطة)
+        const UNIFIED_PIN_COLOR = '#ffd700';
 
-        function createCustomIcon(type) {
-            const color = pinColors[type] || '#1b3b2b';
+        function createCustomIcon() {
             const svgIcon = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" style="filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.8));">
-                    <path fill="${color}" stroke="#ffffff" stroke-width="2.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" style="filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.8));">
+                    <path fill="${UNIFIED_PIN_COLOR}" stroke="#1b3b2b" stroke-width="2.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>`;
             return L.divIcon({
                 html: svgIcon,
@@ -616,7 +553,7 @@
                     }
 
                     const marker = L.marker([displayLat, displayLng], { 
-                        icon: createCustomIcon(prop.type || 'شقة سوبر ديلوكس'),
+                        icon: createCustomIcon(),
                         zIndexOffset: 1000 
                     });
 
