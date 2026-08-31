@@ -401,9 +401,8 @@
             initPickerMap();
         };
 
-        // تم ربط رابط قاعدة البيانات السحابية الحقيقي هنا بدقة تامة
         const firebaseConfig = {
-            databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
+            databaseURL: "https://bleni-house-eaef6-default-rtdb.firebaseio.com/"
         };
         
         if (!firebase.apps.length) {
@@ -448,7 +447,6 @@
             });
         }
 
-        // الاستماع المباشر للسحاب لتحديث واجهة الإدارة والعقارات بشكل حي
         database.ref('properties').on('value', (snapshot) => {
             const listContainer = document.getElementById('managePropertyList');
             listContainer.innerHTML = '';
@@ -510,7 +508,6 @@
                 currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
 
-            // جلب البيانات السرية الخاصة بالمالك إذا وجدت
             database.ref('secret_properties/' + key).once('value', (secSnap) => {
                 const sec = secSnap.val() || {};
                 document.getElementById('ownerName').value = sec.ownerName || '';
