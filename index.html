@@ -456,7 +456,7 @@
                     <option value="">الكل</option>
                     <option value="طابو أخضر">طابو أخضر</option>
                     <option value="حكم محكمة">حكم محكمة</option>
-                    <option value="كاتب عدل">كاتب عدل</option>
+                    <option value="رخصة بناء">رخصة بناء</option>
                     <option value="طابو زراعي">طابو زراعي</option>
                 </select>
             </div>
@@ -554,8 +554,9 @@
             });
         }
 
+        // الرابط السحابي المحدث
         const firebaseConfig = {
-            databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
+            databaseURL: "https://bleni-house-eaef6-default-rtdb.firebaseio.com/"
         };
         
         if (!firebase.apps.length) {
@@ -630,7 +631,6 @@
             });
         }
 
-        // الاستماع المباشر لقاعدة البيانات للتحديث الحي
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
             renderProperties(allProperties);
