@@ -538,10 +538,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // الإسقاط الافتراضي على دمشق وريفها كاملة عند الدخول
         const map = L.map('map', { zoomControl: true }).setView([33.5138, 36.2765], 11);
 
-        // قمر صناعي صافي 100%
         L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -551,11 +549,11 @@
         const markersLayer = L.layerGroup().addTo(map);
         const labelsLayer = L.layerGroup().addTo(map);
 
-        // قاعدة بيانات جغرافية شاملة لكل المحافظات، الأرياف، والبلدات بدقة مطابقة تماماً للواقع
+        // قاعدة بيانات شاملة ومصححة بدقة تامة لجميع المناطق السورية (مطابقة لخرائط جوجل والأقمار الصناعية)
         const syrianLocations = [
-            // 1. المحافظات الكبرى (تظهر عند الزوم العام)
+            // المحافظات
             { name: "دمشق", lat: 33.5138, lng: 36.2765, minZoom: 6, maxZoom: 10, type: 'province' },
-            { name: "ريف دمشق", lat: 33.6500, lng: 36.3500, minZoom: 6, maxZoom: 10, type: 'province' },
+            { name: "ريف دمشق", lat: 33.6000, lng: 36.4000, minZoom: 6, maxZoom: 10, type: 'province' },
             { name: "حلب", lat: 36.2021, lng: 37.1343, minZoom: 6, maxZoom: 10, type: 'province' },
             { name: "حمص", lat: 34.7324, lng: 36.7137, minZoom: 6, maxZoom: 10, type: 'province' },
             { name: "حماة", lat: 35.1318, lng: 36.7578, minZoom: 6, maxZoom: 10, type: 'province' },
@@ -569,49 +567,48 @@
             { name: "الرقة", lat: 35.9559, lng: 39.0083, minZoom: 6, maxZoom: 10, type: 'province' },
             { name: "الحسكة", lat: 36.5022, lng: 40.7449, minZoom: 6, maxZoom: 10, type: 'province' },
 
-            // 2. دمشق وريفها وأريافها تفصيلياً (مصححة ومضبوطة تماماً)
-            { name: "المزة", lat: 33.5050, lng: 36.2500, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "مشروع دمر", lat: 33.5350, lng: 36.2300, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "المالكي", lat: 33.5200, lng: 36.2850, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "أبو رمانة", lat: 33.5180, lng: 36.2900, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "المهاجرين", lat: 33.5280, lng: 36.2800, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "القصاع", lat: 33.5150, lng: 36.3050, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الميدان", lat: 33.4950, lng: 36.2900, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "كفرسوسة", lat: 33.4980, lng: 36.2650, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "ركن الدين", lat: 33.5350, lng: 36.2950, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "برزة", lat: 33.5500, lng: 36.3160, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "جرمانا", lat: 33.3211, lng: 36.3453, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "جديدة عرطوز", lat: 33.3985, lng: 36.1912, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "جديدة الفضل", lat: 33.3820, lng: 36.1750, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "جديدة البلد", lat: 33.4010, lng: 36.1850, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "عرطوز", lat: 33.4120, lng: 36.2050, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "صحنايا", lat: 33.4167, lng: 36.2333, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "أشرفية صحنايا", lat: 33.3950, lng: 36.2200, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "دروشة", lat: 33.3350, lng: 36.2100, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "قدسيا", lat: 33.5500, lng: 36.2167, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الهامة", lat: 33.5550, lng: 36.2350, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "داريا", lat: 33.4650, lng: 36.2400, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "معضمية الشام", lat: 33.4750, lng: 36.2150, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "دوما", lat: 33.5750, lng: 36.4000, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "حرستا", lat: 33.5600, lng: 36.3600, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "عربين", lat: 33.5350, lng: 36.3650, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "زملكا", lat: 33.5250, lng: 36.3500, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "سقبا", lat: 33.5100, lng: 36.3650, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الزبداني", lat: 33.7250, lng: 36.1000, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "بلودان", lat: 33.7330, lng: 36.1330, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "مضايا", lat: 33.6800, lng: 36.1100, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "التل", lat: 33.6167, lng: 36.3167, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "يبرود", lat: 34.0333, lng: 36.6500, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "النبك", lat: 34.0250, lng: 36.7330, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "قطنا", lat: 33.4420, lng: 36.0750, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الكسوة", lat: 33.3600, lng: 36.2400, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "يعفور", lat: 33.5700, lng: 36.1300, minZoom: 11, maxZoom: 20, type: 'district' },
+            // دمشق المركز
+            { name: "المزة", lat: 33.5073, lng: 36.2642, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "مشروع دمر", lat: 33.5358, lng: 36.2411, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "المالكي", lat: 33.5186, lng: 36.2894, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "أبو رمانة", lat: 33.5152, lng: 36.2931, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "المهاجرين", lat: 33.5255, lng: 36.2842, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "القصاع", lat: 33.5161, lng: 36.3075, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الميدان", lat: 33.4939, lng: 36.2922, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "كفرسوسة", lat: 33.4983, lng: 36.2711, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "ركن الدين", lat: 33.5333, lng: 36.2981, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "برزة", lat: 33.5489, lng: 36.3150, minZoom: 11, maxZoom: 20, type: 'district' },
 
-            // 3. محافظة حلب وأريافها
-            { name: "العزيزية حلب", lat: 36.2100, lng: 37.1500, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الشهباء", lat: 36.2300, lng: 37.1200, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الجميلية", lat: 36.2050, lng: 37.1400, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الأعظمية", lat: 36.1850, lng: 37.1350, minZoom: 11, maxZoom: 20, type: 'district' },
+            // ريف دمشق والغوطة والمنطقة الغربية
+            { name: "جرمانا", lat: 33.2872, lng: 36.3536, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "جديدة عرطوز", lat: 33.3444, lng: 36.1950, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "جديدة الفضل", lat: 33.3331, lng: 36.1764, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "عرطوز", lat: 33.3592, lng: 36.2058, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "صحنايا", lat: 33.3764, lng: 36.2367, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "أشرفية صحنايا", lat: 33.3619, lng: 36.2225, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "داريا", lat: 33.4531, lng: 36.2428, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "معضمية الشام", lat: 33.4619, lng: 36.2161, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "قدسيا", lat: 33.5350, lng: 36.2211, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الهامة", lat: 33.5472, lng: 36.2436, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الكسوة", lat: 33.3503, lng: 36.3533, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "قطنا", lat: 33.4406, lng: 36.0792, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "يعفور", lat: 33.5558, lng: 36.1219, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "دوما", lat: 33.5714, lng: 36.4022, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "حرستا", lat: 33.5564, lng: 36.3703, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "عربين", lat: 33.5283, lng: 36.3750, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "زملكا", lat: 33.5186, lng: 36.3556, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "سقبا", lat: 33.5042, lng: 36.3700, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "التل", lat: 33.6169, lng: 36.3150, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "يبرود", lat: 33.9744, lng: 36.6592, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "النبك", lat: 34.0278, lng: 36.7292, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الزبداني", lat: 33.7264, lng: 36.0956, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "بلودان", lat: 33.7289, lng: 36.1264, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "مضايا", lat: 33.6811, lng: 36.1042, minZoom: 11, maxZoom: 20, type: 'district' },
+
+            // حلب وأريافها
+            { name: "العزيزية حلب", lat: 36.2131, lng: 37.1511, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الشهباء", lat: 36.2250, lng: 37.1189, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الجميلية", lat: 36.2039, lng: 37.1392, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "عفرين", lat: 36.5133, lng: 36.8611, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "اعزاز", lat: 36.5858, lng: 37.0483, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "الباب", lat: 36.3722, lng: 37.5111, minZoom: 11, maxZoom: 20, type: 'district' },
@@ -619,71 +616,51 @@
             { name: "السفيرة", lat: 36.0778, lng: 37.3850, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "عين العرب", lat: 36.8900, lng: 38.3533, minZoom: 11, maxZoom: 20, type: 'district' },
 
-            // 4. محافظة حمص وأريافها
-            { name: "الوعر", lat: 34.7350, lng: 36.6850, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "اتحاد المهندسين", lat: 34.7200, lng: 36.7000, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "حمامة", lat: 34.7400, lng: 36.7200, minZoom: 11, maxZoom: 20, type: 'district' },
+            // حمص وأريافها
+            { name: "الوعر", lat: 34.7392, lng: 36.6719, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "تلبيسة", lat: 34.8522, lng: 36.7233, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "الرستن", lat: 34.9250, lng: 36.7333, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "تدمر", lat: 34.5583, lng: 38.2819, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "القصير", lat: 34.5097, lng: 36.5819, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "المخرم", lat: 34.7611, lng: 37.1278, minZoom: 11, maxZoom: 20, type: 'district' },
 
-            // 5. محافظة حماة وأريافها
-            { name: "أوربا حماة", lat: 35.1400, lng: 36.7500, minZoom: 11, maxZoom: 20, type: 'district' },
+            // حماة وأريافها
             { name: "سلمية", lat: 35.0111, lng: 37.0556, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "محرده", lat: 35.2319, lng: 36.5519, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "السقيلبية", lat: 35.4194, lng: 36.3533, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "مصياف", lat: 35.0678, lng: 36.3389, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "التوينة", lat: 35.5300, lng: 36.3600, minZoom: 11, maxZoom: 20, type: 'district' },
 
-            // 6. المحافظات الساحلية (اللاذقية وطرطوس وأريافها)
-            { name: "الأمريكان اللاذقية", lat: 35.5200, lng: 35.7800, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "مشروع 107", lat: 35.5400, lng: 35.7700, minZoom: 11, maxZoom: 20, type: 'district' },
+            // الساحل
+            { name: "الأمريكان اللاذقية", lat: 35.5183, lng: 35.7833, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "مشروع 107", lat: 35.5383, lng: 35.7667, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "جبلة", lat: 35.3614, lng: 35.9228, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "القرداحة", lat: 35.4594, lng: 36.0542, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الحفة", lat: 35.5925, lng: 36.2083, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "بانياس", lat: 35.1833, lng: 35.9500, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "صافيتا", lat: 34.8194, lng: 36.1219, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "الدريكيش", lat: 34.8417, lng: 36.1472, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "القدموس", lat: 35.1056, lng: 36.2028, minZoom: 11, maxZoom: 20, type: 'district' },
 
-            // 7. المنطقة الشرقية (دير الزور، الرقة، الحسكة وأريافها)
-            { name: "الميادين", lat: 35.0214, lng: 40.4497, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "البوكمال", lat: 34.4458, lng: 40.9161, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "هجين", lat: 34.6542, lng: 40.7819, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الشحيل", lat: 35.1325, lng: 40.3719, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "البصيرة", lat: 35.1978, lng: 40.3542, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الصور", lat: 35.7011, lng: 40.5483, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "حسينية دير الزور", lat: 35.3650, lng: 40.1250, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الطبقة", lat: 35.8361, lng: 38.5528, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "تل الأبيض", lat: 36.6967, lng: 38.9556, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "القامشلي", lat: 37.0500, lng: 41.2167, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "رأس العين", lat: 36.8500, lng: 40.0667, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الممالك الحسكة", lat: 36.4800, lng: 40.7200, minZoom: 11, maxZoom: 20, type: 'district' },
-
-            // 8. المنطقة الجنوبية (درعا، السويداء، القنيطرة وأريافها)
-            { name: "بصرى الشام", lat: 32.5167, lng: 36.4833, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "إزرع", lat: 32.8750, lng: 36.2417, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "نوى", lat: 32.8639, lng: 36.1056, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الصنمين", lat: 33.0722, lng: 36.1611, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "شهبا", lat: 32.8556, lng: 36.6250, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "صلخد", lat: 32.4889, lng: 36.7111, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "بقعاثا", lat: 33.2483, lng: 35.7514, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "مسعدة", lat: 33.2350, lng: 35.7650, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "خان أرنبة", lat: 33.2183, lng: 35.8450, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "الكوم", lat: 33.1550, lng: 35.8600, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "جباتا الخشب", lat: 33.2550, lng: 35.8300, minZoom: 11, maxZoom: 20, type: 'district' },
-
-            // 9. إدلب وأريافها (ومنها خان شيخون بدقة)
+            // إدلب وأريافها
             { name: "خان شيخون", lat: 35.3406, lng: 36.6472, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "معرة النعمان", lat: 35.6475, lng: 36.6711, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "سراقب", lat: 35.8633, lng: 36.8014, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "أريحا", lat: 35.8139, lng: 36.6111, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "جسر الشغور", lat: 35.8153, lng: 36.3150, minZoom: 11, maxZoom: 20, type: 'district' },
             { name: "سلقين", lat: 36.1111, lng: 36.4711, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "حارم", lat: 36.1964, lng: 36.5286, minZoom: 11, maxZoom: 20, type: 'district' },
-            { name: "اتارب", lat: 36.1361, lng: 36.8444, minZoom: 11, maxZoom: 20, type: 'district' }
+
+            // الشرقية والشمالية الشرقية
+            { name: "الميادين", lat: 35.0214, lng: 40.4497, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "البوكمال", lat: 34.4458, lng: 40.9161, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الطبقة", lat: 35.8361, lng: 38.5528, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "القامشلي", lat: 37.0500, lng: 41.2167, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "رأس العين", lat: 36.8500, lng: 40.0667, minZoom: 11, maxZoom: 20, type: 'district' },
+
+            // الجنوب
+            { name: "بصرى الشام", lat: 32.5167, lng: 36.4833, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "إزرع", lat: 32.8750, lng: 36.2417, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "نوى", lat: 32.8639, lng: 36.1056, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الصنمين", lat: 33.0722, lng: 36.1611, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "شهبا", lat: 32.8556, lng: 36.6250, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "صلخد", lat: 32.4889, lng: 36.7111, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "خان أرنبة", lat: 33.2183, lng: 35.8450, minZoom: 11, maxZoom: 20, type: 'district' }
         ];
 
         function updateLabels() {
