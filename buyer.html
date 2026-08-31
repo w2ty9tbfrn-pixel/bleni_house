@@ -394,15 +394,19 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 13);
+        // الإسقاط على محافظة دمشق وأريافها بالكامل بمستوى زووم واسع
+        const map = L.map('map', { zoomControl: false }).setView([33.4750, 36.2300], 11);
 
-        L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        // إرجاع خرائط الأقمار الصناعية (Google Satellite + Hybrid) لتبدو البيوت والأراضي واضحة كصور حقيقية
+        L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
         }).addTo(map);
 
         L.control.zoom({ position: 'topleft' }).addTo(map);
+
+        const markersLayer = L.layerGroup().addTo(map);
 
         const pinColors = {
             'شقة عادية': '#00bfff',
@@ -451,51 +455,49 @@
             document.getElementById('videoModal').style.display = 'none';
         }
 
-        let markersLayer = L.layerGroup().addTo(map);
-
         database.ref('properties').on('value', (snapshot) => {
             markersLayer.clearLayers();
-            const allProps = snapshot.val() || {};
+            const data = snapshot.val() || {};
 
-            Object.keys(allProps).forEach(key => {
-                const data = allProps[key];
-                if (data && data.lat && data.lng) {
-                    const marker = L.marker([data.lat, data.lng], { 
-                        icon: createCustomIcon(data.type || 'شقة سوبر ديلوكس') 
+            Object.keys(data).forEach(key => {
+                const prop = data[key];
+                if (prop && prop.lat && prop.lng) {
+                    const marker = L.marker([prop.lat, prop.lng], { 
+                        icon: createCustomIcon(prop.type || 'شقة سوبر ديلوكس') 
                     });
 
                     marker.on('click', function() {
-                        map.setView([data.lat, data.lng], 16, {
+                        map.setView([prop.lat, prop.lng], 15, {
                             animate: true,
                             duration: 0.6
                         });
 
-                        document.getElementById('modalImg').src = data.image || '';
-                        document.getElementById('modalPrice').innerText = data.price || '';
-                        document.getElementById('modalLocation').innerText = '📍 ' + (data.location || 'الموقع غير محدد');
-                        document.getElementById('modalType').innerText = data.type || '';
-                        document.getElementById('modalArea').innerText = (data.area || '') + ' م²';
-                        document.getElementById('modalLayout').innerText = data.layout || '';
-                        document.getElementById('modalLegal').innerText = data.legalStatus || '';
-                        document.getElementById('modalBazar').innerText = data.bazarStatus || '';
+                        document.getElementById('modalImg').src = prop.image || '';
+                        document.getElementById('modalPrice').innerText = prop.price || '';
+                        document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
+                        document.getElementById('modalType').innerText = prop.type || '';
+                        document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
+                        document.getElementById('modalLayout').innerText = prop.layout || '';
+                        document.getElementById('modalLegal').innerText = prop.legalStatus || '';
+                        document.getElementById('modalBazar').innerText = prop.bazarStatus || '';
 
                         const notesContainer = document.getElementById('modalNotesContainer');
-                        if (data.notes) {
-                            document.getElementById('modalNotes').innerText = data.notes;
+                        if (prop.notes) {
+                            document.getElementById('modalNotes').innerText = prop.notes;
                             notesContainer.style.display = 'block';
                         } else {
                             notesContainer.style.display = 'none';
                         }
 
-                        const phoneNum = data.whatsappNumber || '963949041251';
-                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${data.propertyId}`;
+                        const phoneNum = prop.whatsappNumber || '963949041251';
+                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${prop.propertyId}`;
 
                         const videoBtn = document.getElementById('modalVideoBtn');
-                        if (data.video) {
+                        if (prop.video) {
                             videoBtn.style.display = 'block';
                             videoBtn.onclick = function() {
                                 const vPlayer = document.getElementById('activeVideoPlayer');
-                                vPlayer.src = data.video;
+                                vPlayer.src = prop.video;
                                 document.getElementById('videoModal').style.display = 'flex';
                                 vPlayer.play();
                             };
