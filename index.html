@@ -104,7 +104,6 @@
             text-decoration: none;
         }
 
-        /* تعديل مكان أزرار التقريب لتكون تحت الهيدر مباشرة على اليسار */
         .leaflet-top.leaflet-left {
             top: 65px !important;
             left: 10px !important;
@@ -170,7 +169,6 @@
             flex-shrink: 0;
         }
 
-        /* نافذة الفلتر المتقدمة */
         .filter-modal-overlay {
             position: fixed;
             top: 0;
@@ -256,7 +254,6 @@
             cursor: pointer;
         }
 
-        /* نافذة تفاصيل العقار */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -431,7 +428,6 @@
 
     <div id="map"></div>
 
-    <!-- نافذة الفلتر المتقدم -->
     <div id="filterModal" class="filter-modal-overlay">
         <div class="filter-modal-card">
             <h3>تصفية العقارات</h3>
@@ -446,6 +442,7 @@
                     <option value="بيت مستقل">بيت مستقل</option>
                     <option value="مزرعة">مزرعة</option>
                     <option value="أرض">أرض</option>
+                    <option value="محضر">محضر</option>
                     <option value="مشروع استثماري">مشروع استثماري</option>
                 </select>
             </div>
@@ -459,7 +456,7 @@
                     <option value="">الكل</option>
                     <option value="طابو أخضر">طابو أخضر</option>
                     <option value="حكم محكمة">حكم محكمة</option>
-                    <option value="رخصة بناء">رخصة بناء</option>
+                    <option value="كاتب عدل">كاتب عدل</option>
                     <option value="طابو زراعي">طابو زراعي</option>
                 </select>
             </div>
@@ -471,7 +468,6 @@
         </div>
     </div>
 
-    <!-- نافذة تفاصيل العقار -->
     <div id="propertyModal" class="modal-overlay">
         <div class="modal-card">
             <button class="modal-close-btn" onclick="closeModal()">×</button>
@@ -484,6 +480,7 @@
                 <div id="modalLocation" class="popup-location"></div>
                 
                 <div class="property-lines">
+                    <div class="property-line-item"><span>رقم العقار:</span> <span id="modalPropId"></span></div>
                     <div class="property-line-item"><span>نوع العقار:</span> <span id="modalType"></span></div>
                     <div class="property-line-item"><span>المساحة:</span> <span id="modalArea"></span></div>
                     <div class="property-line-item"><span>التقسيم:</span> <span id="modalLayout"></span></div>
@@ -511,6 +508,7 @@
         <div class="legend-item"><span class="legend-color" style="background: #fd7e14;"></span> بيت مستقل</div>
         <div class="legend-item"><span class="legend-color" style="background: #28a745;"></span> مزرعة</div>
         <div class="legend-item"><span class="legend-color" style="background: #795548;"></span> أرض</div>
+        <div class="legend-item"><span class="legend-color" style="background: #343a40;"></span> محضر</div>
         <div class="legend-item"><span class="legend-color" style="background: #ffc107;"></span> مشروع استثماري</div>
     </div>
 
@@ -519,10 +517,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // ضبط الإسقاط والزوم ليغطي دمشق وريفها والمناطق المحيطة بالكامل فور الدخول
         const map = L.map('map', { zoomControl: true }).setView([33.48, 36.25], 10);
 
-        // طبقة القمر الصناعي الصافية مع إخفاء دبابيس الأماكن العامة تماماً وإبقاء الشوارع والمسميات الكبرى والمناطق
         L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -539,6 +535,7 @@
             'بيت مستقل': '#fd7e14',
             'مزرعة': '#28a745',
             'أرض': '#795548',
+            'محضر': '#343a40',
             'مشروع استثماري': '#ffc107'
         };
 
@@ -591,7 +588,6 @@
                     });
 
                     marker.on('click', function() {
-                        // توسط الشاشة على العقار تماماً عند النقر
                         map.setView([prop.lat, prop.lng], 15, {
                             animate: true,
                             duration: 0.6
@@ -600,6 +596,7 @@
                         document.getElementById('modalImg').src = prop.image || '';
                         document.getElementById('modalPrice').innerText = prop.price || '';
                         document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
+                        document.getElementById('modalPropId').innerText = prop.propertyId || '---';
                         document.getElementById('modalType').innerText = prop.type || '';
                         document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
                         document.getElementById('modalLayout').innerText = prop.layout || '';
@@ -615,7 +612,7 @@
                         }
 
                         const phoneNum = prop.whatsappNumber || '963949041251';
-                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=أنا%20مهتم%20بالعقار%20رقم%20${prop.propertyId}`;
+                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=` + encodeURIComponent(`مرحباً، أنا مهتم بالعقار رقم (${prop.propertyId}) وأرغب ببعض التفاصيل الإضافية.`);
 
                         const videoBtn = document.getElementById('modalVideoBtn');
                         if (prop.instagramVideoUrl) {
@@ -633,6 +630,7 @@
             });
         }
 
+        // الاستماع المباشر لقاعدة البيانات للتحديث الحي
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
             renderProperties(allProperties);
@@ -650,19 +648,15 @@
                 const prop = allProperties[key];
                 if (!prop) return;
 
-                // فلتر نوع العقار
                 if (selectedType && prop.type !== selectedType) return;
 
-                // فلتر السعر (ضمن نطاق +/- 10,000 دولار)
                 if (targetPrice !== null) {
-                    // استخراج الأرقام فقط من نص السعر في القاعدة
                     const priceNum = parseFloat(String(prop.price).replace(/[^0-9.]/g, '')) || 0;
                     if (priceNum < (targetPrice - 10000) || priceNum > (targetPrice + 10000)) {
                         return;
                     }
                 }
 
-                // فلتر السند القانوني
                 if (selectedLegal && prop.legalStatus !== selectedLegal) return;
 
                 filtered[key] = prop;
