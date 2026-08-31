@@ -367,7 +367,6 @@
         }
 
         function initPickerMap() {
-            // خريطة أقمار صناعية مع أسماء الشوارع والمناطق (Hybrid)
             mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
 
             L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
@@ -429,6 +428,7 @@
             });
         }
 
+        // جلب العقارات الحالية مع معالجة الأخطاء لضمان عدم التعليق
         database.ref('properties').on('value', (snapshot) => {
             const listContainer = document.getElementById('managePropertyList');
             listContainer.innerHTML = '';
@@ -460,6 +460,8 @@
                 `;
                 listContainer.appendChild(itemDiv);
             });
+        }, (error) => {
+            document.getElementById('managePropertyList').innerHTML = '<p style="font-size: 0.85rem; color: red; text-align: center;">خطأ في جلب البيانات من السحاب.</p>';
         });
 
         window.startEdit = function(key) {
@@ -593,7 +595,7 @@
                     }
                 }
             } catch (err) {
-                alert("❌ حدث خطأ أثناء الحفظ (قد يكون حجم الفيديو كبيراً جداً): " + err.message);
+                alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار الآن 🔄" : "حفظ ونشر العقار فوراً 🚀";
