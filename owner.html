@@ -276,12 +276,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>1. اختيار صورة العقار 📷 (يفضل صور بحجم معقول)</label>
+                    <label>1. اختيار صورة العقار 📷</label>
                     <input type="file" id="imageFile" class="form-control" accept="image/*">
                 </div>
 
                 <div class="form-group">
-                    <label>2. اختيار فيديو العقار 🎥 (اختياري)</label>
+                    <label>2. اختيار فيديو العقار 🎥</label>
                     <input type="file" id="videoFile" class="form-control" accept="video/*">
                 </div>
 
@@ -424,8 +424,6 @@
                 `;
                 listContainer.appendChild(itemDiv);
             });
-        }, (error) => {
-            console.error("Firebase Read Error:", error);
         });
 
         window.startEdit = function(key) {
@@ -561,7 +559,6 @@
                 }
             } catch (err) {
                 alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
-                console.error(err);
             } finally {
                 submitBtn.disabled = false;
                 const editKey = document.getElementById('editKey').value;
