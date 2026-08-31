@@ -81,19 +81,31 @@
             background: #111;
         }
 
-        /* تنسيق مسميات المناطق والنطاقات الجغرافية النظيفة */
-        .clean-region-label {
-            background: rgba(27, 59, 43, 0.88);
-            color: #fff;
-            border: 1px solid var(--accent-gold);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        /* تصميم الخط النقي بدون أي غلاف خلفي أخضر */
+        .pure-map-label {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9), 0px 0px 6px rgba(0,0,0,0.9);
             white-space: nowrap;
             pointer-events: none;
+        }
+
+        .label-country {
+            color: #ffffff;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .label-province {
+            color: #f1c40f;
+            font-size: 14px;
+        }
+
+        .label-district {
+            color: #ecf0f1;
+            font-size: 11px;
         }
 
         .quick-call-widget {
@@ -533,38 +545,109 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // التركيز التلقائي على محافظة دمشق وريفها بالكامل فور فتح المشتري للخريطة
-        const map = L.map('map', { zoomControl: true }).setView([33.5138, 36.2765], 10);
+        const map = L.map('map', { zoomControl: true }).setView([35.0, 38.0], 7);
 
-        // استخدام طبقة القمر الصناعي الصافية (بدون زحمة ومسميات ومطاعم جوجل)
-        L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
         }).addTo(map);
 
         const markersLayer = L.layerGroup().addTo(map);
+        const labelsLayer = L.layerGroup().addTo(map);
 
-        // مسميات المناطق والمحافظات النظيفة المضافة يدوياً
-        const cleanRegions = [
-            { name: "📍 دمشق (مركز المدينة)", lat: 33.5138, lng: 36.2765 },
-            { name: "🏡 المزة", lat: 33.5050, lng: 36.2500 },
-            { name: "🏡 مشروع دمر", lat: 33.5350, lng: 36.2300 },
-            { name: "🏡 جرمانا", lat: 33.4833, lng: 36.3500 },
-            { name: "🏡 صحنايا", lat: 33.4167, lng: 36.2333 },
-            { name: "🏡 قدسيا", lat: 33.5500, lng: 36.2167 },
-            { name: "🏡 ريف دمشق", lat: 33.6500, lng: 36.3000 }
+        // قاعدة بيانات شاملة لكامل سوريا (محافظات ومناطق ومدن فرعية)
+        const syriaLocations = [
+            // مستوى البلد ككل / المحافظات الكبرى (تظهر عند الزوم المنخفض)
+            { name: "الجمهورية العربية السورية", lat: 35.0, lng: 38.0, minZoom: 5, maxZoom: 8, type: 'country' },
+            { name: "محافظة دمشق", lat: 33.5138, lng: 36.2765, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "ريف دمشق", lat: 33.6000, lng: 36.4000, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة حلب", lat: 36.2021, lng: 37.1343, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة حمص", lat: 34.7324, lng: 36.7137, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة حماة", lat: 35.1318, lng: 36.7578, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة اللاذقية", lat: 35.5317, lng: 35.7915, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة طرطوس", lat: 34.8890, lng: 35.8866, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة درعا", lat: 32.6185, lng: 36.1052, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة السويداء", lat: 32.7092, lng: 36.5684, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة القنيطرة", lat: 33.1284, lng: 35.8251, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة إدلب", lat: 35.9306, lng: 36.6339, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة دير الزور", lat: 35.3359, lng: 40.1481, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة الرقة", lat: 35.9559, lng: 39.0083, minZoom: 8, maxZoom: 11, type: 'province' },
+            { name: "محافظة الحسكة", lat: 36.5022, lng: 40.7449, minZoom: 8, maxZoom: 11, type: 'province' },
+
+            // المناطق والأحياء الدقيقة (تظهر عند الاقتراب الزوم العالي مثل دمشق وريفها وباقي المحافظات)
+            { name: "المزة", lat: 33.5050, lng: 36.2500, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "مشروع دمر", lat: 33.5350, lng: 36.2300, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "المالكي", lat: 33.5200, lng: 36.2850, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "أبو رمانة", lat: 33.5180, lng: 36.2900, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "المهاجرين", lat: 33.5280, lng: 36.2800, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "القصاع", lat: 33.5150, lng: 36.3050, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "العباسيين", lat: 33.5220, lng: 36.3150, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "ركن الدين", lat: 33.5350, lng: 36.2950, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "برزة", lat: 33.5500, lng: 36.3160, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "الميدان", lat: 33.4950, lng: 36.2900, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "كفرسوسة", lat: 33.4980, lng: 36.2650, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "جسر الأبيض", lat: 33.5150, lng: 36.2950, minZoom: 12, maxZoom: 20, type: 'district' },
+            
+            // ريف دمشق والمناطق التابعة لها
+            { name: "جديدة عرطوز", lat: 33.4350, lng: 36.1950, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "عرطوز", lat: 33.4450, lng: 36.2100, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "جرمانا", lat: 33.4833, lng: 36.3500, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "صحنايا", lat: 33.4167, lng: 36.2333, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "لاشرفية السلمية / أشرفية صحنايا", lat: 33.3950, lng: 36.2200, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "قدسيا", lat: 33.5500, lng: 36.2167, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الهامة", lat: 33.5550, lng: 36.2350, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "داريا", lat: 33.4650, lng: 36.2400, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "معضمية الشام", lat: 33.4750, lng: 36.2150, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "دوما", lat: 33.5750, lng: 36.4000, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "حرستا", lat: 33.5600, lng: 36.3600, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "عربين", lat: 33.5350, lng: 36.3650, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "زملكا", lat: 33.5250, lng: 36.3500, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "سقبا", lat: 33.5100, lng: 36.3650, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "حمورية", lat: 33.5200, lng: 36.3800, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "الزبداني", lat: 33.7250, lng: 36.1000, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "بلودان", lat: 33.7330, lng: 36.1330, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "مملكة مضايا", lat: 33.6800, lng: 36.1100, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "التل", lat: 33.6167, lng: 36.3167, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "يبرود", lat: 34.0333, lng: 36.6500, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "النبك", lat: 34.0250, lng: 36.7330, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "قطنا", lat: 33.4420, lng: 36.0750, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "الكسوة", lat: 33.3600, lng: 36.2400, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "يعفور", lat: 33.5700, lng: 36.1300, minZoom: 12, maxZoom: 20, type: 'district' },
+
+            // باقي المحافظات والمناطق الكبرى
+            { name: "المدينة القديمة", lat: 36.2000, lng: 37.1500, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "السريان", lat: 36.2200, lng: 37.1300, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "الشهباء", lat: 36.2300, lng: 37.1200, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "الوعر", lat: 34.7500, lng: 36.6700, minZoom: 11, maxZoom: 20, type: 'district' },
+            { name: "المشارقة", lat: 34.7200, lng: 36.7200, minZoom: 12, maxZoom: 20, type: 'district' },
+            { name: "الأمريكان", lat: 34.7300, lng: 36.7000, minZoom: 12, maxZoom: 20, type: 'district' }
         ];
 
-        cleanRegions.forEach(region => {
-            const regionIcon = L.divIcon({
-                className: '',
-                html: `<div class="clean-region-label">${region.name}</div>`,
-                iconSize: [120, 25],
-                iconAnchor: [60, 12]
+        function updateMapLabels() {
+            labelsLayer.clearLayers();
+            const currentZoom = map.getZoom();
+
+            syriaLocations.forEach(loc => {
+                if (currentZoom >= loc.minZoom && currentZoom <= loc.maxZoom) {
+                    let className = 'pure-map-label ';
+                    if (loc.type === 'country') className += 'label-country';
+                    else if (loc.type === 'province') className += 'label-province';
+                    else className += 'label-district';
+
+                    const labelIcon = L.divIcon({
+                        className: className,
+                        html: loc.name,
+                        iconSize: [null, null]
+                    });
+
+                    L.marker([loc.lat, loc.lng], { icon: labelIcon, interactive: false }).addTo(labelsLayer);
+                }
             });
-            L.marker([region.lat, region.lng], { icon: regionIcon, interactive: false }).addTo(map);
-        });
+        }
+
+        map.on('zoomend', updateMapLabels);
+        updateMapLabels(); // التشغيل الأولي
 
         const pinColors = {
             'شقة عادية': '#00bfff',
@@ -593,7 +676,6 @@
             });
         }
 
-        // الربط السحابي المحدث والمتوافق تماماً مع لوحة المالك
         const firebaseConfig = {
             databaseURL: "https://bleni-house-eaef6-default-rtdb.firebaseio.com/"
         };
