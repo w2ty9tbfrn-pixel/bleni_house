@@ -78,7 +78,7 @@
             height: calc(100% - 60px);
             margin-top: 60px;
             z-index: 1;
-            background: #f4f6f4;
+            background: #111;
         }
 
         .leaflet-marker-pane {
@@ -528,8 +528,8 @@
             maxZoom: 20
         }).setView([33.4350, 36.1900], 11);
 
-        // استخدام خرائط جوجل القياسية (مع أسماء المناطق، الشوارع، والمعالم الرسمية)
-        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        // استخدام خرائط جوجل القمر الصناعي المختلط (صور حقيقية للأرض والبيوت + مسميات الشوارع والمناطق فوقها)
+        L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
