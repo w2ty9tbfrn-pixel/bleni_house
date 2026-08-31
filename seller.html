@@ -113,7 +113,7 @@
 
         #map-picker {
             width: 100%;
-            height: 250px;
+            height: 280px;
             border-radius: 8px;
             margin-top: 8px;
             border: 1px solid #ccc;
@@ -132,12 +132,6 @@
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
             transition: background 0.2s;
-        }
-
-        .btn-submit:disabled {
-            background-color: #6c757d;
-            opacity: 0.7;
-            cursor: not-allowed;
         }
 
         .btn-cancel-edit {
@@ -205,7 +199,7 @@
     </header>
 
     <div class="main-container">
-        <form id="property-form">
+        <form id="property-form" onsubmit="handleFormSubmit(event)">
             <input type="hidden" id="editKey" value="">
             <div class="card">
                 <div class="card-title">
@@ -219,7 +213,7 @@
 
                 <div class="form-group">
                     <label>نوع العقار وحالته</label>
-                    <select id="type" class="form-control" required>
+                    <select id="type" class="form-control" onchange="updateMarkerColor()" required>
                         <option value="شقة عادية">شقة عادية</option>
                         <option value="شقة سوبر ديلوكس">شقة سوبر ديلوكس</option>
                         <option value="شقة على العظم">شقة على العظم</option>
@@ -292,11 +286,11 @@
             </div>
 
             <div class="card">
-                <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
+                <div class="card-title">2. تحديد موقع العقار على الخريطة (خرائط جوجل مع أسماء الشوارع)</div>
                 <p style="font-size: 0.8rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة:</p>
                 <div id="map-picker"></div>
-                <input type="hidden" id="lat" required>
-                <input type="hidden" id="lng" required>
+                <input type="hidden" id="lat">
+                <input type="hidden" id="lng">
             </div>
 
             <div class="card secret-box">
@@ -336,6 +330,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
+        // التحقق من كلمة السر
         const SECRET_PASSWORD = "123456";
         let userPass = prompt("أدخل كلمة السر للدخول لوحة المالك:");
         if (userPass !== SECRET_PASSWORD) {
@@ -345,10 +340,38 @@
 
         let mapPicker, currentMarker = null;
 
-        function initPickerMap() {
-            mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 13);
+        const pinColors = {
+            'شقة عادية': '#00bfff',
+            'شقة سوبر ديلوكس': '#007bff',
+            'شقة على العظم': '#6c757d',
+            'فيلا': '#dc3545',
+            'بيت مستقل': '#fd7e14',
+            'مزرعة': '#28a745',
+            'أرض': '#795548',
+            'محضر': '#343a40',
+            'مشروع استثماري': '#ffc107'
+        };
 
-            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        function getCustomIcon(type) {
+            const color = pinColors[type] || '#1b3b2b';
+            const svgIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                    <path fill="${color}" stroke="#ffffff" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>`;
+            return L.divIcon({
+                html: svgIcon,
+                className: '',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32]
+            });
+        }
+
+        function initPickerMap() {
+            // ضبط الإسقاط على دمشق وأريافها بوضوح
+            mapPicker = L.map('map-picker').setView([33.4750, 36.2300], 11);
+
+            // استخدام طبقة خرائط جوجل الرسمية المزودة بالأسماء والتسميات التوضيحية (Google Hybrid Maps)
+            L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; Google Maps'
@@ -361,12 +384,25 @@
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
 
+                const selectedType = document.getElementById('type').value;
+
                 if (currentMarker) {
                     mapPicker.removeLayer(currentMarker);
                 }
-                currentMarker = L.marker([lat, lng]).addTo(mapPicker);
+                currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
             });
         }
+
+        window.updateMarkerColor = function() {
+            const lat = document.getElementById('lat').value;
+            const lng = document.getElementById('lng').value;
+            const selectedType = document.getElementById('type').value;
+
+            if (lat && lng && currentMarker) {
+                mapPicker.removeLayer(currentMarker);
+                currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
+            }
+        };
 
         window.onload = function() {
             initPickerMap();
@@ -418,12 +454,14 @@
                         </div>
                     </div>
                     <div class="prop-actions">
-                        <button class="btn-action btn-edit" onclick="startEdit('${key}')">تعديل</button>
-                        <button class="btn-action btn-delete" onclick="deleteProperty('${key}')">حذف</button>
+                        <button class="btn-action btn-edit" type="button" onclick="startEdit('${key}')">تعديل</button>
+                        <button class="btn-action btn-delete" type="button" onclick="deleteProperty('${key}')">حذف</button>
                     </div>
                 `;
                 listContainer.appendChild(itemDiv);
             });
+        }, (error) => {
+            document.getElementById('managePropertyList').innerHTML = '<p style="font-size: 0.85rem; color: red; text-align: center;">خطأ في جلب البيانات من السحاب.</p>';
         });
 
         window.startEdit = function(key) {
@@ -448,7 +486,7 @@
             if (prop.lat && prop.lng) {
                 mapPicker.setView([prop.lat, prop.lng], 15);
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
-                currentMarker = L.marker([prop.lat, prop.lng]).addTo(mapPicker);
+                currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
 
             document.getElementById('formTitleText').innerText = "2. تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
@@ -465,6 +503,8 @@
             document.getElementById('formTitleText').innerText = "1. إضافة عقار جديد";
             document.getElementById('submitBtn').innerText = "حفظ ونشر العقار فوراً 🚀";
             document.getElementById('cancelEditBtn').style.display = 'none';
+            document.getElementById('lat').value = '';
+            document.getElementById('lng').value = '';
             if (currentMarker) {
                 mapPicker.removeLayer(currentMarker);
                 currentMarker = null;
@@ -482,20 +522,20 @@
             }
         };
 
-        document.getElementById('property-form').addEventListener('submit', async function(e) {
+        window.handleFormSubmit = async function(e) {
             e.preventDefault();
 
             const lat = document.getElementById('lat').value;
             const lng = document.getElementById('lng').value;
 
             if (!lat || !lng) {
-                alert("⚠️ يرجى تحديد موقع العقار على الخريطة أولاً بالضغط عليها!");
+                alert("⚠️ تنبيه: يرجى النقر على الخريطة لتحديد موقع العقار بدقة قبل الحفظ!");
                 return;
             }
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerText = "⏳ جاري المعالجة والحفظ السحابي...";
+            submitBtn.innerText = "جاري الحفظ والنشر للسحاب... ⏳";
 
             try {
                 const editKey = document.getElementById('editKey').value;
@@ -536,35 +576,31 @@
                 };
 
                 if (editKey) {
-                    await Promise.all([
-                        database.ref('properties/' + editKey).set(propertyData),
-                        database.ref('secret_properties/' + editKey).set(secretData)
-                    ]);
-                    alert("✨ تم تحديث العقار بنجاح!");
+                    await database.ref('properties/' + editKey).set(propertyData);
+                    await database.ref('secret_properties/' + editKey).set(secretData);
+                    alert("✨ تم تحديث العقار ونشره فوراً على خريطة المشترين!");
                     cancelEdit();
                 } else {
                     const newRef = database.ref('properties').push();
                     await newRef.set(propertyData);
                     await database.ref('secret_properties/' + newRef.key).set(secretData);
-                    
-                    alert("✅ تم حفظ ونشر العقار بنجاح في السحاب!");
+                    alert("🚀 تم حفظ ونشر العقار الجديد بنجاح! أصبح ظاهراً الآن على لوحة المشتري.");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
+                    document.getElementById('lat').value = '';
+                    document.getElementById('lng').value = '';
                     if (currentMarker) {
                         mapPicker.removeLayer(currentMarker);
                         currentMarker = null;
                     }
-                    document.getElementById('lat').value = '';
-                    document.getElementById('lng').value = '';
                 }
             } catch (err) {
                 alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
             } finally {
                 submitBtn.disabled = false;
-                const editKey = document.getElementById('editKey').value;
-                submitBtn.innerText = editKey ? "تحديث العقار الآن 🔄" : "حفظ ونشر العقار فوراً 🚀";
+                submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار الآن 🔄" : "حفظ ونشر العقار فوراً 🚀";
             }
-        });
+        };
     </script>
 </body>
 </html>
