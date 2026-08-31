@@ -108,7 +108,6 @@
             margin-bottom: 8px;
         }
 
-        /* حاوية الخريطة والبحث المدمج */
         .map-container-wrapper {
             position: relative;
             width: 100%;
@@ -123,7 +122,6 @@
             z-index: 1;
         }
 
-        /* شريط البحث المدمج داخل الخريطة */
         .map-search-box {
             position: absolute;
             top: 10px;
@@ -253,7 +251,7 @@
 
                 <div class="form-group">
                     <label>نوع العقار وحالته</label>
-                    <select id="type" class="form-control" onchange="updateMarkerColor()" required>
+                    <select id="type" class="form-control" required>
                         <option value="شقة عادية">شقة عادية</option>
                         <option value="شقة سوبر ديلوكس">شقة سوبر ديلوكس</option>
                         <option value="شقة على العظم">شقة على العظم</option>
@@ -281,8 +279,9 @@
                     <select id="legalStatus" class="form-control" required>
                         <option value="طابو أخضر">طابو أخضر</option>
                         <option value="حكم محكمة">حكم محكمة</option>
-                        <option value="كاتب عدل">كاتب عدل</option>
+                        <option value="رخصة بناء">رخصة بناء</option>
                         <option value="طابو زراعي">طابو زراعي</option>
+                        <option value="غير معروف">غير معروف</option>
                     </select>
                 </div>
 
@@ -330,9 +329,8 @@
                 <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">ابحث عن المنطقة أو انقر مباشرة على الخريطة لتحديد الموقع:</p>
                 
                 <div class="map-container-wrapper">
-                    <!-- شريط البحث الجغرافي المدمج داخل الخريطة -->
                     <div class="map-search-box">
-                        <input type="text" id="mapSearchInput" placeholder="ابحث عن منطقة، حي، أو معلم..." onkeypress="if(event.key === 'Y' || event.key === 'Enter') searchMapLocation()">
+                        <input type="text" id="mapSearchInput" placeholder="ابحث عن منطقة، حي، أو معلم..." onkeypress="if(event.key === 'Enter') searchMapLocation()">
                         <button type="button" onclick="searchMapLocation()">بحث</button>
                     </div>
                     <div id="map-picker"></div>
@@ -389,23 +387,13 @@
         let mapPicker, currentMarker = null;
         let allPropertiesCache = {};
 
-        const pinColors = {
-            'شقة عادية': '#00bfff',
-            'شقة سوبر ديلوكس': '#007bff',
-            'شقة على العظم': '#6c757d',
-            'فيلا': '#dc3545',
-            'بيت مستقل': '#fd7e14',
-            'مزرعة': '#28a745',
-            'أرض': '#795548',
-            'محضر': '#343a40',
-            'مشروع استثماري': '#ffc107'
-        };
+        // لون موحد واضح لجميع العقارات (أصفر ذهبي ساطع يبرز بقوة فوق الخريطة)
+        const UNIFIED_PIN_COLOR = '#ffd700';
 
-        function getCustomIcon(type) {
-            const color = pinColors[type] || '#1b3b2b';
+        function getCustomIcon() {
             const svgIcon = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-                    <path fill="${color}" stroke="#ffffff" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.8));">
+                    <path fill="${UNIFIED_PIN_COLOR}" stroke="#1b3b2b" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>`;
             return L.divIcon({
                 html: svgIcon,
@@ -431,16 +419,13 @@
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
 
-                const selectedType = document.getElementById('type').value;
-
                 if (currentMarker) {
                     mapPicker.removeLayer(currentMarker);
                 }
-                currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
+                currentMarker = L.marker([lat, lng], { icon: getCustomIcon() }).addTo(mapPicker);
             });
         }
 
-        // دالة البحث الجغرافي داخل الخريطة باستخدام Nominatim API
         window.searchMapLocation = function() {
             const query = document.getElementById('mapSearchInput').value.trim();
             if (!query) {
@@ -456,7 +441,6 @@
                     if (data && data.length > 0) {
                         const lat = parseFloat(data[0].lat);
                         const lon = parseFloat(data[0].lon);
-                        
                         mapPicker.setView([lat, lon], 16);
                     } else {
                         alert("لم يتم العثور على الموقع المطلوب، يرجى المحاولة بصيغة أخرى.");
@@ -466,17 +450,6 @@
                     console.error("Error searching map:", error);
                     alert("حدث خطأ أثناء الاتصال بخدمة البحث الجغرافي.");
                 });
-        };
-
-        window.updateMarkerColor = function() {
-            const lat = document.getElementById('lat').value;
-            const lng = document.getElementById('lng').value;
-            const selectedType = document.getElementById('type').value;
-
-            if (lat && lng && currentMarker) {
-                mapPicker.removeLayer(currentMarker);
-                currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
-            }
         };
 
         window.onload = function() {
@@ -587,7 +560,7 @@
             if (prop.lat && prop.lng) {
                 mapPicker.setView([prop.lat, prop.lng], 15);
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
-                currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
+                currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon() }).addTo(mapPicker);
             }
 
             document.getElementById('formTitleText').innerText = "تعديل العقار السحابي (رقم: " + prop.propertyId + ")";
@@ -695,9 +668,6 @@
             } catch (err) {
                 alert("❌ خطأ في الحفظ السحابي: " + err.message);
             } finally {
-                submitBtn.disabled = theFormSubmitState => {
-                    submitBtn.disabled = false;
-                };
                 submitBtn.disabled = false;
                 submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار على السحاب 🔄" : "حفظ ونشر العقار للسحاب فوراً ☁️🚀";
             }
