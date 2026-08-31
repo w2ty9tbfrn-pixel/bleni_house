@@ -73,9 +73,6 @@
             border-bottom: 2px solid var(--accent-gold);
             padding-bottom: 5px;
             font-size: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .form-group { margin-bottom: 10px; }
@@ -131,7 +128,6 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            transition: background 0.2s;
         }
 
         .btn-cancel-edit {
@@ -148,8 +144,6 @@
             border-bottom: 1px solid #eee;
             gap: 10px;
         }
-
-        .property-list-item:last-child { border-bottom: none; }
 
         .prop-info {
             display: flex;
@@ -232,8 +226,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label>التقسيم (الغرف والصالون والمنتفعات)</label>
-                    <input type="text" id="layout" class="form-control" placeholder="مثال: غرفتين وصالون ومنتفعات" required>
+                    <label>التقسيم</label>
+                    <input type="text" id="layout" class="form-control" placeholder="مثال: غرفتين وصالون" required>
                 </div>
 
                 <div class="form-group">
@@ -261,22 +255,22 @@
 
                 <div class="form-group">
                     <label>موقع العقار (المنطقة / الحي)</label>
-                    <input type="text" id="location" class="form-control" placeholder="مثال: دمر، الشرفة" required>
+                    <input type="text" id="location" class="form-control" placeholder="مثال: دمر" required>
                 </div>
 
                 <div class="form-group">
-                    <label>ملاحظة العقار (إطلالة، كساء، إلخ...)</label>
-                    <input type="text" id="notes" class="form-control" placeholder="مثال: إطلالة بحرية أو جبلية رائعة">
+                    <label>ملاحظة العقار</label>
+                    <input type="text" id="notes" class="form-control" placeholder="إطلالة مميزة">
                 </div>
 
                 <div class="form-group">
-                    <label>1. اختيار صورة العقار 📷</label>
+                    <label>صورة العقار 📷 (سيتم ضغطها تلقائياً لتتخزن بسلاسة)</label>
                     <input type="file" id="imageFile" class="form-control" accept="image/*">
                 </div>
 
                 <div class="form-group">
-                    <label>2. اختيار فيديو العقار 🎥</label>
-                    <input type="file" id="videoFile" class="form-control" accept="video/*">
+                    <label>رابط فيديو إنستغرام 📸🎥 (ضع رابط المنشور أو الريلز من إنستغرام)</label>
+                    <input type="url" id="instagramUrl" class="form-control" placeholder="https://www.instagram.com/reel/...">
                 </div>
 
                 <div class="form-group">
@@ -286,31 +280,18 @@
             </div>
 
             <div class="card">
-                <div class="card-title">2. تحديد موقع العقار على الخريطة (خرائط جوجل مع أسماء الشوارع)</div>
-                <p style="font-size: 0.8rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة:</p>
+                <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat">
                 <input type="hidden" id="lng">
             </div>
 
             <div class="card secret-box">
-                <div class="secret-title">🔒 3. الصندوق السري (خاص بالمالك فقط)</div>
-                <div class="form-group">
-                    <label>اسم المالك الأصلي</label>
-                    <input type="text" id="ownerName" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>رقم هاتف المالك الأصلي</label>
-                    <input type="text" id="ownerPhone" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>اسم المصور</label>
-                    <input type="text" id="photographer" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>نسبة العمولات</label>
-                    <input type="text" id="commission" class="form-control">
-                </div>
+                <div class="secret-title">🔒 3. الصندوق السري (للمالك فقط)</div>
+                <div class="form-group"><label>اسم المالك الأصلي</label><input type="text" id="ownerName" class="form-control"></div>
+                <div class="form-group"><label>رقم هاتف المالك الأصلي</label><input type="text" id="ownerPhone" class="form-control"></div>
+                <div class="form-group"><label>اسم المصور</label><input type="text" id="photographer" class="form-control"></div>
+                <div class="form-group"><label>نسبة العمولات</label><input type="text" id="commission" class="form-control"></div>
             </div>
 
             <button type="submit" id="submitBtn" class="btn-submit">حفظ ونشر العقار فوراً 🚀</button>
@@ -318,9 +299,9 @@
         </form>
 
         <div class="card" style="margin-top: 20px;">
-            <div class="card-title">إدارة العقارات الحالية (تعديل أو حذف)</div>
+            <div class="card-title">إدارة العقارات الحالية</div>
             <div id="managePropertyList">
-                <p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">جاري تحميل العقارات...</p>
+                <p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">جاري التحميل...</p>
             </div>
         </div>
     </div>
@@ -330,7 +311,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // التحقق من كلمة السر
         const SECRET_PASSWORD = "123456";
         let userPass = prompt("أدخل كلمة السر للدخول لوحة المالك:");
         if (userPass !== SECRET_PASSWORD) {
@@ -341,54 +321,31 @@
         let mapPicker, currentMarker = null;
 
         const pinColors = {
-            'شقة عادية': '#00bfff',
-            'شقة سوبر ديلوكس': '#007bff',
-            'شقة على العظم': '#6c757d',
-            'فيلا': '#dc3545',
-            'بيت مستقل': '#fd7e14',
-            'مزرعة': '#28a745',
-            'أرض': '#795548',
-            'محضر': '#343a40',
-            'مشروع استثماري': '#ffc107'
+            'شقة عادية': '#00bfff', 'شقة سوبر ديلوكس': '#007bff', 'شقة على العظم': '#6c757d',
+            'فيلا': '#dc3545', 'بيت مستقل': '#fd7e14', 'مزرعة': '#28a745',
+            'أرض': '#795548', 'محضر': '#343a40', 'مشروع استثماري': '#ffc107'
         };
 
         function getCustomIcon(type) {
             const color = pinColors[type] || '#1b3b2b';
-            const svgIcon = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-                    <path fill="${color}" stroke="#ffffff" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                </svg>`;
-            return L.divIcon({
-                html: svgIcon,
-                className: '',
-                iconSize: [32, 32],
-                iconAnchor: [16, 32]
-            });
+            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32"><path fill="${color}" stroke="#ffffff" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+            return L.divIcon({ html: svgIcon, className: '', iconSize: [32, 32], iconAnchor: [16, 32] });
         }
 
         function initPickerMap() {
-            // ضبط الإسقاط على دمشق وأريافها بوضوح
             mapPicker = L.map('map-picker').setView([33.4750, 36.2300], 11);
-
-            // استخدام طبقة خرائط جوجل الرسمية المزودة بالأسماء والتسميات التوضيحية (Google Hybrid Maps)
             L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                attribution: '&copy; Google Maps'
+                maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
             }).addTo(mapPicker);
 
             mapPicker.on('click', function(e) {
                 const lat = e.latlng.lat;
                 const lng = e.latlng.lng;
-                
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
-
                 const selectedType = document.getElementById('type').value;
 
-                if (currentMarker) {
-                    mapPicker.removeLayer(currentMarker);
-                }
+                if (currentMarker) mapPicker.removeLayer(currentMarker);
                 currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
             });
         }
@@ -397,16 +354,13 @@
             const lat = document.getElementById('lat').value;
             const lng = document.getElementById('lng').value;
             const selectedType = document.getElementById('type').value;
-
             if (lat && lng && currentMarker) {
                 mapPicker.removeLayer(currentMarker);
                 currentMarker = L.marker([lat, lng], { icon: getCustomIcon(selectedType) }).addTo(mapPicker);
             }
         };
 
-        window.onload = function() {
-            initPickerMap();
-        };
+        window.onload = function() { initPickerMap(); };
 
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
@@ -419,13 +373,41 @@
 
         let allPropertiesCache = {};
 
-        function readFileAsDataURL(file) {
+        function compressImage(file) {
             return new Promise((resolve) => {
                 if (!file) return resolve('');
                 const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = () => resolve('');
                 reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                };
+                reader.onerror = () => resolve('');
             });
         }
 
@@ -433,8 +415,8 @@
             const listContainer = document.getElementById('managePropertyList');
             listContainer.innerHTML = '';
             allPropertiesCache = snapshot.val() || {};
-
             const keys = Object.keys(allPropertiesCache);
+            
             if (keys.length === 0) {
                 listContainer.innerHTML = '<p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">لا توجد عقارات مضافة حتى الآن.</p>';
                 return;
@@ -444,7 +426,6 @@
                 const prop = allPropertiesCache[key];
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'property-list-item';
-                
                 itemDiv.innerHTML = `
                     <div class="prop-info">
                         <img src="${prop.image || 'https://via.placeholder.com/50'}" class="prop-thumb" alt="صورة">
@@ -460,14 +441,11 @@
                 `;
                 listContainer.appendChild(itemDiv);
             });
-        }, (error) => {
-            document.getElementById('managePropertyList').innerHTML = '<p style="font-size: 0.85rem; color: red; text-align: center;">خطأ في جلب البيانات من السحاب.</p>';
         });
 
         window.startEdit = function(key) {
             const prop = allPropertiesCache[key];
             if (!prop) return;
-
             document.getElementById('editKey').value = key;
             document.getElementById('propertyId').value = prop.propertyId || '';
             document.getElementById('type').value = prop.type || 'شقة سوبر ديلوكس';
@@ -478,8 +456,8 @@
             document.getElementById('bazarStatus').value = prop.bazarStatus || 'قابل للتفاوض (في بازار)';
             document.getElementById('location').value = prop.location || '';
             document.getElementById('notes').value = prop.notes || '';
+            document.getElementById('instagramUrl').value = prop.instagramVideo || '';
             document.getElementById('whatsappNumber').value = prop.whatsappNumber || '963949041251';
-            
             document.getElementById('lat').value = prop.lat || '';
             document.getElementById('lng').value = prop.lng || '';
 
@@ -489,10 +467,9 @@
                 currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
 
-            document.getElementById('formTitleText').innerText = "2. تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
+            document.getElementById('formTitleText').innerText = "تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
             document.getElementById('submitBtn').innerText = "تحديث العقار الآن 🔄";
             document.getElementById('cancelEditBtn').style.display = 'block';
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
@@ -500,54 +477,48 @@
             document.getElementById('editKey').value = '';
             document.getElementById('property-form').reset();
             document.getElementById('whatsappNumber').value = "963949041251";
+            document.getElementById('instagramUrl').value = '';
             document.getElementById('formTitleText').innerText = "1. إضافة عقار جديد";
             document.getElementById('submitBtn').innerText = "حفظ ونشر العقار فوراً 🚀";
             document.getElementById('cancelEditBtn').style.display = 'none';
             document.getElementById('lat').value = '';
             document.getElementById('lng').value = '';
-            if (currentMarker) {
-                mapPicker.removeLayer(currentMarker);
-                currentMarker = null;
-            }
+            if (currentMarker) { mapPicker.removeLayer(currentMarker); currentMarker = null; }
         };
 
         window.deleteProperty = function(key) {
-            if (confirm("هل أنت متأكد من رغبتك في حذف هذا العقار نهائياً؟")) {
+            if (confirm("هل أنت متأكد من رغبتك في حذف هذا العقار؟")) {
                 database.ref('properties/' + key).remove()
                 .then(() => {
                     database.ref('secret_properties/' + key).remove();
-                    alert("🗑️ تم حذف العقار بنجاح!");
-                })
-                .catch(err => alert("خطأ بالحذف: " + err.message));
+                    alert("🗑️ تم الحذف بنجاح!");
+                }).catch(err => alert("خطأ بالحذف: " + err.message));
             }
         };
 
         window.handleFormSubmit = async function(e) {
             e.preventDefault();
-
             const lat = document.getElementById('lat').value;
             const lng = document.getElementById('lng').value;
 
             if (!lat || !lng) {
-                alert("⚠️ تنبيه: يرجى النقر على الخريطة لتحديد موقع العقار بدقة قبل الحفظ!");
+                alert("⚠️ يرجى النقر على الخريطة لتحديد موقع العقار أولاً!");
                 return;
             }
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerText = "جاري الحفظ والنشر للسحاب... ⏳";
+            submitBtn.innerText = "جاري معالجة الصورة والنشر... ⏳";
 
             try {
                 const editKey = document.getElementById('editKey').value;
                 const imgFile = document.getElementById('imageFile').files[0];
-                const vFile = document.getElementById('videoFile').files[0];
+                const instagramLink = document.getElementById('instagramUrl').value;
 
-                let imageData = imgFile ? await readFileAsDataURL(imgFile) : '';
-                let vData = vFile ? await readFileAsDataURL(vFile) : '';
+                let imageUrl = editKey && allPropertiesCache[editKey] ? allPropertiesCache[editKey].image : '';
 
-                if (editKey && allPropertiesCache[editKey]) {
-                    if (!imageData) imageData = allPropertiesCache[editKey].image || '';
-                    if (!vData) vData = allPropertiesCache[editKey].video || '';
+                if (imgFile) {
+                    imageUrl = await compressImage(imgFile);
                 }
 
                 const propertyData = {
@@ -563,8 +534,8 @@
                     whatsappNumber: document.getElementById('whatsappNumber').value,
                     lat: parseFloat(lat),
                     lng: parseFloat(lng),
-                    image: imageData,
-                    video: vData
+                    image: imageUrl,
+                    instagramVideo: instagramLink // حفظ رابط إنستغرام حصراً
                 };
 
                 const secretData = {
@@ -578,24 +549,22 @@
                 if (editKey) {
                     await database.ref('properties/' + editKey).set(propertyData);
                     await database.ref('secret_properties/' + editKey).set(secretData);
-                    alert("✨ تم تحديث العقار ونشره فوراً على خريطة المشترين!");
+                    alert("✨ تم تحديث ونشر العقار بنجاح!");
                     cancelEdit();
                 } else {
                     const newRef = database.ref('properties').push();
                     await newRef.set(propertyData);
                     await database.ref('secret_properties/' + newRef.key).set(secretData);
-                    alert("🚀 تم حفظ ونشر العقار الجديد بنجاح! أصبح ظاهراً الآن على لوحة المشتري.");
+                    alert("🚀 تم نشر العقار الجديد بنجاح على لوحة المشتري!");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
+                    document.getElementById('instagramUrl').value = '';
                     document.getElementById('lat').value = '';
                     document.getElementById('lng').value = '';
-                    if (currentMarker) {
-                        mapPicker.removeLayer(currentMarker);
-                        currentMarker = null;
-                    }
+                    if (currentMarker) { mapPicker.removeLayer(currentMarker); currentMarker = null; }
                 }
             } catch (err) {
-                alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
+                alert("❌ حدث خطأ أثناء النشر: " + err.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار الآن 🔄" : "حفظ ونشر العقار فوراً 🚀";
