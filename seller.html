@@ -108,13 +108,58 @@
             margin-bottom: 8px;
         }
 
+        /* حاوية الخريطة والبحث المدمج */
+        .map-container-wrapper {
+            position: relative;
+            width: 100%;
+            margin-top: 8px;
+        }
+
         #map-picker {
             width: 100%;
-            height: 250px;
+            height: 280px;
             border-radius: 8px;
-            margin-top: 8px;
             border: 1px solid #ccc;
             z-index: 1;
+        }
+
+        /* شريط البحث المدمج داخل الخريطة */
+        .map-search-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        .map-search-box input {
+            flex: 1;
+            border: none;
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            outline: none;
+            background: transparent;
+        }
+
+        .map-search-box button {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 0 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .map-search-box button:hover {
+            background: #254e38;
         }
 
         .btn-submit {
@@ -282,8 +327,17 @@
 
             <div class="card">
                 <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
-                <p style="font-size: 0.8rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة:</p>
-                <div id="map-picker"></div>
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">ابحث عن المنطقة أو انقر مباشرة على الخريطة لتحديد الموقع:</p>
+                
+                <div class="map-container-wrapper">
+                    <!-- شريط البحث الجغرافي المدمج داخل الخريطة -->
+                    <div class="map-search-box">
+                        <input type="text" id="mapSearchInput" placeholder="ابحث عن منطقة، حي، أو معلم..." onkeypress="if(event.key === 'Y' || event.key === 'Enter') searchMapLocation()">
+                        <button type="button" onclick="searchMapLocation()">بحث</button>
+                    </div>
+                    <div id="map-picker"></div>
+                </div>
+
                 <input type="hidden" id="lat">
                 <input type="hidden" id="lng">
             </div>
@@ -362,7 +416,7 @@
         }
 
         function initPickerMap() {
-            mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 11);
+            mapPicker = L.map('map-picker').setView([33.5138, 36.2765], 15);
 
             L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
@@ -386,6 +440,34 @@
             });
         }
 
+        // دالة البحث الجغرافي داخل الخريطة باستخدام Nominatim API
+        window.searchMapLocation = function() {
+            const query = document.getElementById('mapSearchInput').value.trim();
+            if (!query) {
+                alert("الرجاء إدخال اسم المنطقة أو الحي للبحث.");
+                return;
+            }
+
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        
+                        mapPicker.setView([lat, lon], 16);
+                    } else {
+                        alert("لم يتم العثور على الموقع المطلوب، يرجى المحاولة بصيغة أخرى.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error searching map:", error);
+                    alert("حدث خطأ أثناء الاتصال بخدمة البحث الجغرافي.");
+                });
+        };
+
         window.updateMarkerColor = function() {
             const lat = document.getElementById('lat').value;
             const lng = document.getElementById('lng').value;
@@ -401,7 +483,6 @@
             initPickerMap();
         };
 
-        // تم تحديث الرابط السحابي هنا بدقة ليتوافق تماماً مع كود المشتري
         const firebaseConfig = {
             databaseURL: "https://bleni-house-eaef6-default-rtdb.firebaseio.com/"
         };
@@ -504,7 +585,7 @@
             document.getElementById('lng').value = prop.lng || '';
 
             if (prop.lat && prop.lng) {
-                mapPicker.setView([prop.lat, prop.lng], 14);
+                mapPicker.setView([prop.lat, prop.lng], 15);
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
                 currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
@@ -614,6 +695,9 @@
             } catch (err) {
                 alert("❌ خطأ في الحفظ السحابي: " + err.message);
             } finally {
+                submitBtn.disabled = theFormSubmitState => {
+                    submitBtn.disabled = false;
+                };
                 submitBtn.disabled = false;
                 submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار على السحاب 🔄" : "حفظ ونشر العقار للسحاب فوراً ☁️🚀";
             }
