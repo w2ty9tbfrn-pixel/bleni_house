@@ -528,7 +528,7 @@
             maxZoom: 20
         }).setView([33.4350, 36.1900], 11);
 
-        // استخدام خرائط جوجل القمر الصناعي المختلط (صور حقيقية للأرض والبيوت + مسميات الشوارع والمناطق فوقها)
+        // استخدام خرائط جوجل القمر الصناعي المختلط (Hybrid)
         L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -621,7 +621,8 @@
                     });
 
                     marker.on('click', function() {
-                        map.setView([prop.lat, prop.lng], 20, {
+                        // تم تعديل مستوى الزوم إلى 15 (مستوى مناسب وواضح وليس قريباً جداً)
+                        map.setView([prop.lat, prop.lng], 15, {
                             animate: true,
                             duration: 0.6
                         });
