@@ -356,10 +356,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // الإسقاط الافتراضي على كامل منطقة دمشق وريفها (مع إظهار المسميات والمناطق)
         const map = L.map('map', { zoomControl: false }).setView([33.5138, 36.2765], 11);
 
-        // طبقة خريطة القمر الصناعي مع أسماء الشوارع والمناطق (Google Hybrid)
         L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -397,6 +395,7 @@
             });
         }
 
+        // تم ربط رابط قاعدة بياناتك الصحيح هنا بالكامل
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
