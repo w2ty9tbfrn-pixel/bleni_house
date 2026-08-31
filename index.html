@@ -104,7 +104,7 @@
             text-decoration: none;
         }
 
-        /* تعديل مكان أزرار التقريب لتكون تحت الفلتر على اليسار وبحجم صغير */
+        /* تعديل مكان أزرار التقريب لتكون تحت الهيدر مباشرة على اليسار */
         .leaflet-top.leaflet-left {
             top: 65px !important;
             left: 10px !important;
@@ -170,6 +170,93 @@
             flex-shrink: 0;
         }
 
+        /* نافذة الفلتر المتقدمة */
+        .filter-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3500;
+            padding: 15px;
+            backdrop-filter: blur(4px);
+        }
+
+        .filter-modal-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 360px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 2px solid var(--accent-gold);
+            direction: rtl;
+            text-align: right;
+            position: relative;
+        }
+
+        .filter-modal-card h3 {
+            color: var(--primary-green);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid var(--accent-gold);
+            padding-bottom: 6px;
+        }
+
+        .filter-group {
+            margin-bottom: 12px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .apply-filter-btn {
+            flex: 1;
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .reset-filter-btn {
+            flex: 1;
+            background-color: #ddd;
+            color: #333;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* نافذة تفاصيل العقار */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -329,7 +416,7 @@
         <div class="brand-title">
             Bleni House <span>| بلان هاوس</span>
         </div>
-        <button class="filter-btn-header" onclick="alert('خاصية الفلتر السريع قيد التفعيل')">
+        <button class="filter-btn-header" onclick="openFilterModal()">
             🔍 فلترة العقارات
         </button>
     </header>
@@ -344,6 +431,47 @@
 
     <div id="map"></div>
 
+    <!-- نافذة الفلتر المتقدم -->
+    <div id="filterModal" class="filter-modal-overlay">
+        <div class="filter-modal-card">
+            <h3>تصفية العقارات</h3>
+            <div class="filter-group">
+                <label>نوع العقار:</label>
+                <select id="filterType">
+                    <option value="">الكل (جميع الأنواع)</option>
+                    <option value="شقة عادية">شقة عادية</option>
+                    <option value="شقة سوبر ديلوكس">شقة سوبر ديلوكس</option>
+                    <option value="شقة على العظم">شقة على العظم</option>
+                    <option value="فيلا">فيلا</option>
+                    <option value="بيت مستقل">بيت مستقل</option>
+                    <option value="مزرعة">مزرعة</option>
+                    <option value="أرض">أرض</option>
+                    <option value="مشروع استثماري">مشروع استثماري</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>السعر التقريبي ($):</label>
+                <input type="number" id="filterPrice" placeholder="مثال: 50000 (يشمل نطاق +/- 10,000)">
+            </div>
+            <div class="filter-group">
+                <label>نوع السند القانوني / الطابو:</label>
+                <select id="filterLegal">
+                    <option value="">الكل</option>
+                    <option value="طابو أخضر">طابو أخضر</option>
+                    <option value="حكم محكمة">حكم محكمة</option>
+                    <option value="رخصة بناء">رخصة بناء</option>
+                    <option value="طابو زراعي">طابو زراعي</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="apply-filter-btn" onclick="applyFilter()">تطبيق الفلتر</button>
+                <button class="reset-filter-btn" onclick="resetFilter()">إعادة ضبط</button>
+            </div>
+            <button class="modal-close-btn" onclick="closeFilterModal()">×</button>
+        </div>
+    </div>
+
+    <!-- نافذة تفاصيل العقار -->
     <div id="propertyModal" class="modal-overlay">
         <div class="modal-card">
             <button class="modal-close-btn" onclick="closeModal()">×</button>
@@ -391,9 +519,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const map = L.map('map', { zoomControl: true }).setView([33.5138, 36.2765], 11);
+        // ضبط الإسقاط والزوم ليغطي دمشق وريفها والمناطق المحيطة بالكامل فور الدخول
+        const map = L.map('map', { zoomControl: true }).setView([33.48, 36.25], 10);
 
-        // استخدام طبقة القمر الصناعي الصافية (Imagery Only) لإخفاء الدبابيس والأماكن المشهورة مع بقاء الشوارع والمسميات الكبرى
+        // طبقة القمر الصناعي الصافية مع إخفاء دبابيس الأماكن العامة تماماً وإبقاء الشوارع والمسميات الكبرى والمناطق
         L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -437,23 +566,32 @@
         }
         const database = firebase.database();
 
+        let allProperties = {};
+
         function closeModal() {
             document.getElementById('propertyModal').style.display = 'none';
         }
 
-        database.ref('properties').on('value', (snapshot) => {
-            markersLayer.clearLayers();
-            const data = snapshot.val() || {};
+        function openFilterModal() {
+            document.getElementById('filterModal').style.display = 'flex';
+        }
 
-            Object.keys(data).forEach(key => {
-                const prop = data[key];
+        function closeFilterModal() {
+            document.getElementById('filterModal').style.display = 'none';
+        }
+
+        function renderProperties(properties) {
+            markersLayer.clearLayers();
+
+            Object.keys(properties).forEach(key => {
+                const prop = properties[key];
                 if (prop && prop.lat && prop.lng) {
                     const marker = L.marker([prop.lat, prop.lng], { 
                         icon: createCustomIcon(prop.type || 'شقة سوبر ديلوكس') 
                     });
 
                     marker.on('click', function() {
-                        // جعل العقار يأتِ لمنتصف الشاشة تماماً عند الضغط عليه
+                        // توسط الشاشة على العقار تماماً عند النقر
                         map.setView([prop.lat, prop.lng], 15, {
                             animate: true,
                             duration: 0.6
@@ -493,7 +631,54 @@
                     markersLayer.addLayer(marker);
                 }
             });
+        }
+
+        database.ref('properties').on('value', (snapshot) => {
+            allProperties = snapshot.val() || {};
+            renderProperties(allProperties);
         });
+
+        function applyFilter() {
+            const selectedType = document.getElementById('filterType').value;
+            const priceInput = document.getElementById('filterPrice').value;
+            const selectedLegal = document.getElementById('filterLegal').value;
+
+            const targetPrice = priceInput ? parseFloat(priceInput) : null;
+
+            const filtered = {};
+            Object.keys(allProperties).forEach(key => {
+                const prop = allProperties[key];
+                if (!prop) return;
+
+                // فلتر نوع العقار
+                if (selectedType && prop.type !== selectedType) return;
+
+                // فلتر السعر (ضمن نطاق +/- 10,000 دولار)
+                if (targetPrice !== null) {
+                    // استخراج الأرقام فقط من نص السعر في القاعدة
+                    const priceNum = parseFloat(String(prop.price).replace(/[^0-9.]/g, '')) || 0;
+                    if (priceNum < (targetPrice - 10000) || priceNum > (targetPrice + 10000)) {
+                        return;
+                    }
+                }
+
+                // فلتر السند القانوني
+                if (selectedLegal && prop.legalStatus !== selectedLegal) return;
+
+                filtered[key] = prop;
+            });
+
+            renderProperties(filtered);
+            closeFilterModal();
+        }
+
+        function resetFilter() {
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterPrice').value = '';
+            document.getElementById('filterLegal').value = '';
+            renderProperties(allProperties);
+            closeFilterModal();
+        }
     </script>
 </body>
 </html>
