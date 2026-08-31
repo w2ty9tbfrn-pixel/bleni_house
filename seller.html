@@ -270,7 +270,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>اختيار صورة العقار 📷</label>
+                    <label>اختيار صورة العقار 📷 (يتم ضغطها تلقائياً لتكون خفيفة وسريعة)</label>
                     <input type="file" id="imageFile" class="form-control" accept="image/*">
                 </div>
 
@@ -416,12 +416,42 @@
 
         let allPropertiesCache = {};
 
-        function readFileAsDataURL(file) {
+        // دالة لضغط الصور تلقائياً وجعلها خفيفة وسريعة جداً للإرسال للسحاب
+        function compressImage(file) {
             return new Promise((resolve) => {
                 if (!file) return resolve('');
                 const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = () => resolve('');
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // ضغط الجودة لـ 70% لتكون خفيفة جداً ولا تتسبب بتعليق الحفظ
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.src = e.target.result;
+                };
                 reader.readAsDataURL(file);
             });
         }
@@ -539,7 +569,7 @@
                 const editKey = document.getElementById('editKey').value;
                 const imgFile = document.getElementById('imageFile').files[0];
 
-                let imageData = imgFile ? await readFileAsDataURL(imgFile) : '';
+                let imageData = imgFile ? await compressImage(imgFile) : '';
 
                 if (editKey && allPropertiesCache[editKey]) {
                     if (!imageData) imageData = allPropertiesCache[editKey].image || '';
