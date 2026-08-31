@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>بلان هاوس | Bleni House</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- استدعاء مكتبة تجميع الدبابيس MarkerCluster -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <style>
         :root {
             --primary-green: #1b3b2b;
@@ -184,19 +181,6 @@
             margin-left: 5px;
             display: inline-block;
             flex-shrink: 0;
-        }
-
-        /* تخصيص شكل مجموعات الدبابيس (Cluster) لتناسب الهوية البصرية */
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-            background-color: rgba(27, 59, 43, 0.6) !important;
-        }
-        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-            background-color: var(--primary-green) !important;
-            color: var(--accent-gold) !important;
-            font-weight: bold;
-            border: 2px solid var(--accent-gold);
-            border-radius: 50%;
-            font-size: 13px;
         }
 
         .filter-modal-overlay {
@@ -543,14 +527,12 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- استدعاء ملف جافاسكريبت الخاص بـ MarkerCluster -->
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // الخريطة تبدأ مركزة على دمشق وريفها والقنيطرة
-        const map = L.map('map', { zoomControl: true }).setView([33.4200, 36.1500], 10);
+        // الاسقاط الأولي (الافتتاحي) على دمشق وريفها وتحديداً جديدة عرطوز البلد والفضل
+        const map = L.map('map', { zoomControl: true }).setView([33.4535, 36.1420], 12);
 
         // طبقة الأقمار الصناعية الصافية من جوجل
         L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
@@ -559,46 +541,45 @@
             attribution: '&copy; Google Maps'
         }).addTo(map);
 
-        // إنشاء مجموعة مخصصة لتجميع الدبابيس تلقائياً (Marker Cluster Group)
-        const markersClusterGroup = L.markerClusterGroup({
-            maxClusterRadius: 50, // مسافة التجميع
-            spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false,
-            zoomToBoundsOnClick: true
-        });
-        map.addLayer(markersClusterGroup);
-
-        // بيانات أسماء المحافظات والأرياف السورية بخط أبيض واضح
+        // قائمة شاملة لكافة المحافظات والأرياف السورية معاً وبأماكنها الصحيحة
         const regionsData = [
             { name: "دمشق", lat: 33.5138, lng: 36.2765 },
-            { name: "ريف دمشق", lat: 33.6000, lng: 36.4500 },
+            { name: "ريف دمشق", lat: 33.6200, lng: 36.5000 },
+            { name: "جديدة عرطوز البلد", lat: 33.4610, lng: 36.1320 },
+            { name: "جديدة عرطوز الفضل", lat: 33.4420, lng: 36.1550 },
             { name: "قطنا", lat: 33.4475, lng: 36.0792 },
             { name: "القنيطرة", lat: 33.1250, lng: 35.8250 },
             { name: "درعا", lat: 32.6186, lng: 36.1050 },
+            { name: "ريف درعا", lat: 32.8200, lng: 36.2200 },
+            { name: "السويداء", lat: 32.7093, lng: 36.5631 },
             { name: "حمص", lat: 34.7324, lng: 36.7137 },
-            { name: "حلب", lat: 36.2021, lng: 37.1343 },
+            { name: "ريف حمص / تدمر", lat: 34.5623, lng: 38.2774 },
             { name: "حماة", lat: 35.1318, lng: 36.7578 },
+            { name: "ريف حماة", lat: 35.3000, lng: 36.5000 },
+            { name: "إدلب", lat: 35.9306, lng: 36.6339 },
+            { name: "حلب", lat: 36.2021, lng: 37.1343 },
+            { name: "ريف حلب", lat: 36.3500, lng: 37.3500 },
             { name: "اللاذقية", lat: 35.5317, lng: 35.7915 },
             { name: "طرطوس", lat: 34.8890, lng: 35.8866 },
-            { name: "إدلب", lat: 35.9306, lng: 36.6339 },
-            { name: "السويداء", lat: 32.7093, lng: 36.5631 },
-            { name: "درعا / الريف", lat: 32.8500, lng: 36.2500 }
+            { name: "الرقة", lat: 35.9559, lng: 39.0094 },
+            { name: "دير الزور", lat: 35.3359, lng: 40.1488 },
+            { name: "ريف دير الزور", lat: 35.2000, lng: 40.3500 },
+            { name: "الحسكة", lat: 36.5023, lng: 40.7441 }
         ];
 
         const regionLayers = [];
 
-        // رسم أسماء المحافظات والأرياف
         regionsData.forEach(reg => {
             const labelIcon = L.divIcon({
                 className: 'region-label',
                 html: `<div>${reg.name}</div>`,
-                iconSize: [80, 20]
+                iconSize: [90, 20]
             });
             const rMarker = L.marker([reg.lat, reg.lng], { icon: labelIcon, interactive: false });
             regionLayers.push(rMarker);
         });
 
-        // دالة إظهار أو إخفاء أسماء المحافظات بناءً على مستوى الزووم (تختفي إذا اقترب المستخدم أكثر من زووم 11 ليبقى التركيز على العقار)
+        // دالة إخفاء أسماء المحافظات والأرياف تلقائياً عندما يقترب المستخدم (زووم أكبر من 11) ليبقى التركيز حصرياً على العقارات
         function updateRegionsVisibility() {
             const currentZoom = map.getZoom();
             if (currentZoom <= 11) {
@@ -612,9 +593,8 @@
             }
         }
 
-        // مراقبة حركة تقريب / ابتعاد الخريطة
         map.on('zoomend', updateRegionsVisibility);
-        updateRegionsVisibility(); // التشغيل الأولي
+        updateRegionsVisibility();
 
         const pinColors = {
             'شقة عادية': '#00bfff',
@@ -653,6 +633,7 @@
         const database = firebase.database();
 
         let allProperties = {};
+        const activeMarkersGroup = L.layerGroup().addTo(map);
 
         function closeModal() {
             document.getElementById('propertyModal').style.display = 'none';
@@ -666,13 +647,39 @@
             document.getElementById('filterModal').style.display = 'none';
         }
 
+        // خوارزمية هندسية ذكية (شكل القوس/الوردة عند التباعد) لمنع تداخل أو اختفاء الدبابيس دون تغيير مواقعها الإحداثية الأساسية الحقيقية
         function renderProperties(properties) {
-            markersClusterGroup.clearLayers();
+            activeMarkersGroup.clearLayers();
 
-            Object.keys(properties).forEach(key => {
-                const prop = properties[key];
-                if (prop && prop.lat && prop.lng) {
-                    const marker = L.marker([prop.lat, prop.lng], { 
+            const propsArray = Object.keys(properties).map(k => ({ key: k, ...properties[k] })).filter(p => p && p.lat && p.lng);
+            
+            // تجميع العقارات حسب الإحداثيات المتطابقة تماماً أو المتقاربة جداً لمعالجة التداخل عند الزووم البعيد
+            const coordinateGroups = {};
+            propsArray.forEach(prop => {
+                const coordKey = `${Number(prop.lat).toFixed(4)}_${Number(prop.lng).toFixed(4)}`;
+                if (!coordinateGroups[coordKey]) {
+                    coordinateGroups[coordKey] = [];
+                }
+                coordinateGroups[coordKey].push(prop);
+            });
+
+            Object.keys(coordinateGroups).forEach(coordKey => {
+                const group = coordinateGroups[coordKey];
+                const count = group.length;
+
+                group.forEach((prop, index) => {
+                    let displayLat = Number(prop.lat);
+                    let displayLng = Number(prop.lng);
+
+                    // إذا كان هناك أكثر من عقار في نفس النقطة تماماً، نقوم بعمل تفرع هندسي مؤقت (على شكل قوس/وردة) فقط عند التباعد أو التطابق التام، ويمكن إزالتها أو تعديلها حسب الحاجة البصرية
+                    if (count > 1) {
+                        const angle = (index / count) * 2 * Math.PI;
+                        const radius = 0.00018 * index; // شعاع بسيط جداً لا يؤثر على مصداقية الموقع الحقيقي
+                        displayLat += radius * Math.cos(angle);
+                        displayLng += radius * Math.sin(angle);
+                    }
+
+                    const marker = L.marker([displayLat, displayLng], { 
                         icon: createCustomIcon(prop.type || 'شقة سوبر ديلوكس') 
                     });
 
@@ -714,8 +721,8 @@
                         document.getElementById('propertyModal').style.display = 'flex';
                     });
 
-                    markersClusterGroup.addLayer(marker);
-                }
+                    activeMarkersGroup.addLayer(marker);
+                });
             });
         }
 
