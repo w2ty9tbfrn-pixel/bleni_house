@@ -81,7 +81,10 @@
             background: #111;
         }
 
-        /* تنسيق أسماء المحافظات والبلدات بخط أبيض وتختفي عند الاقتراب الشديد */
+        .leaflet-marker-pane {
+            z-index: 700 !important;
+        }
+
         .region-label {
             background: transparent;
             border: none;
@@ -531,21 +534,18 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // الإسقاط الافتراضي مطابق تماماً للصورة التي أرسلتها (مركّز على دمشق وجديدة عرطوز والريف بمستوى زووم مرن ودقيق)
         const map = L.map('map', { 
             zoomControl: true,
-            minZoom: 3,  // تتيح لك الابتعاد لرؤية كل سوريا (مثل خرائط جوجل)
-            maxZoom: 20  // تتيح لك الاقتراب لأعلى مستوى وضوح ممكن
+            minZoom: 3,
+            maxZoom: 20
         }).setView([33.4350, 36.1900], 11);
 
-        // طبقة الأقمار الصناعية الصافية من جوجل بجودة فائقة
         L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
         }).addTo(map);
 
-        // قائمة المحافظات والبلدات الدقيقة مطابقة لروابطك والواقع الجغرافي تماماً
         const regionsData = [
             { name: "دمشق", lat: 33.5138, lng: 36.2765 },
             { name: "ريف دمشق", lat: 33.6200, lng: 36.5000 },
@@ -584,7 +584,6 @@
             regionLayers.push(rMarker);
         });
 
-        // دالة إخفاء أسماء المحافظات والبلدات عند الاقتراب الشديد (تركيز حصري على العقارات)
         function updateRegionsVisibility() {
             const currentZoom = map.getZoom();
             if (currentZoom <= 12) {
@@ -613,18 +612,19 @@
             'مشروع استثماري': '#ffc107'
         };
 
+        // حجم طبيعي وأنيق للدبابيس (واضح للمالك والمشتري وغير مزعج)
         function createCustomIcon(type) {
             const color = pinColors[type] || '#1b3b2b';
             const svgIcon = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="34" height="34">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.6));">
                     <path fill="${color}" stroke="#ffffff" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>`;
             return L.divIcon({
                 html: svgIcon,
                 className: '',
-                iconSize: [34, 34],
-                iconAnchor: [17, 34],
-                popupAnchor: [0, -34]
+                iconSize: [28, 28],
+                iconAnchor: [14, 28],
+                popupAnchor: [0, -28]
             });
         }
 
@@ -640,8 +640,18 @@
         let allProperties = {};
         const activeMarkersGroup = L.layerGroup().addTo(map);
 
+        let selectedPropertyCoords = null; // لحفظ إحداثيات العقار المختار للتركيز عليه عند الإغلاق
+
         function closeModal() {
             document.getElementById('propertyModal').style.display = 'none';
+            
+            // عند إغلاق نافذة التفاصيل، الانتقال الفوري بأقصى زووم (20) فوق العقار تماماً
+            if (selectedPropertyCoords) {
+                map.setView([selectedPropertyCoords.lat, selectedPropertyCoords.lng], 20, {
+                    animate: true,
+                    duration: 0.8
+                });
+            }
         }
 
         function openFilterModal() {
@@ -652,7 +662,6 @@
             document.getElementById('filterModal').style.display = 'none';
         }
 
-        // خوارزمية هندسية لمنع تداخل أو اختفاء الدبابيس المتطابقة مع الحفاظ على دقة المواقع الأصلية
         function renderProperties(properties) {
             activeMarkersGroup.clearLayers();
 
@@ -677,19 +686,24 @@
 
                     if (count > 1) {
                         const angle = (index / count) * 2 * Math.PI;
-                        const radius = 0.00015 * index; 
+                        const radius = 0.00012 * index; 
                         displayLat += radius * Math.cos(angle);
                         displayLng += radius * Math.sin(angle);
                     }
 
                     const marker = L.marker([displayLat, displayLng], { 
-                        icon: createCustomIcon(prop.type || 'شقة سوبر ديلوكس') 
+                        icon: createCustomIcon(prop.type || 'شقة سوبر ديلوكس'),
+                        zIndexOffset: 1000 
                     });
 
                     marker.on('click', function() {
-                        map.setView([prop.lat, prop.lng], 15, {
+                        // حفظ الإحداثيات الأصلية للعقار
+                        selectedPropertyCoords = { lat: prop.lat, lng: prop.lng };
+
+                        // عند النقر تقريب الخريطة نحو العقار مباشرة
+                        map.setView([prop.lat, prop.lng], 16, {
                             animate: true,
-                            duration: 0.6
+                            duration: 0.5
                         });
 
                         document.getElementById('modalImg').src = prop.image || '';
@@ -742,7 +756,7 @@
             const targetPrice = priceInput ? parseFloat(priceInput) : null;
 
             const filtered = {};
-            Object.keys(allProperties).keys && Object.keys(allProperties).forEach(key => {
+            Object.keys(allProperties).forEach(key => {
                 const prop = allProperties[key];
                 if (!prop) return;
 
