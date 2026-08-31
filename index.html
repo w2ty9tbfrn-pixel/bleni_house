@@ -460,9 +460,10 @@
                 <select id="filterLegal">
                     <option value="">الكل</option>
                     <option value="طابو أخضر">طابو أخضر</option>
-                    <option value="ح حكم محكمة">ح حكم محكمة</option>
+                    <option value="حكم محكمة">حكم محكمة</option>
                     <option value="رخصة بناء">رخصة بناء</option>
                     <option value="طابو زراعي">طابو زراعي</option>
+                    <option value="غير معروف">غير معروف</option>
                 </select>
             </div>
             <div class="filter-actions">
@@ -528,7 +529,6 @@
             maxZoom: 20
         }).setView([33.4350, 36.1900], 11);
 
-        // استخدام خرائط جوجل القمر الصناعي المختلط (Hybrid)
         L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -621,7 +621,6 @@
                     });
 
                     marker.on('click', function() {
-                        // تم تعديل مستوى الزوم إلى 15 (مستوى مناسب وواضح وليس قريباً جداً)
                         map.setView([prop.lat, prop.lng], 15, {
                             animate: true,
                             duration: 0.6
