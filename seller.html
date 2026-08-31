@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>لوحة المالك | Bleni House</title>
+    <title>لوحة المالك السحابية | Bleni House</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -73,9 +73,6 @@
             border-bottom: 2px solid var(--accent-gold);
             padding-bottom: 5px;
             font-size: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .form-group { margin-bottom: 10px; }
@@ -195,16 +192,14 @@
 <body>
 
     <header class="app-header">
-        <h1>لوحة المالك <span>| Bleni House</span></h1>
+        <h1>لوحة المالك السحابية <span>| Bleni House</span></h1>
     </header>
 
     <div class="main-container">
-        <form id="property-form" onsubmit="handleFormSubmit(event)">
+        <form id="property-form" onsubmit="handleCloudFormSubmit(event)">
             <input type="hidden" id="editKey" value="">
             <div class="card">
-                <div class="card-title">
-                    <span id="formTitleText">1. إضافة عقار جديد</span>
-                </div>
+                <div class="card-title" id="formTitleText">1. إضافة عقار جديد للسحاب</div>
                 
                 <div class="form-group">
                     <label>رقم العقار</label>
@@ -270,7 +265,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>اختيار صورة العقار 📷 (يتم ضغطها تلقائياً لتكون خفيفة وسريعة)</label>
+                    <label>اختيار صورة العقار 📷</label>
                     <input type="file" id="imageFile" class="form-control" accept="image/*">
                 </div>
 
@@ -286,7 +281,7 @@
             </div>
 
             <div class="card">
-                <div class="card-title">2. تحديد موقع العقار على الخريطة (أقمار صناعية مع أسماء الشوارع)</div>
+                <div class="card-title">2. تحديد موقع العقار على الخريطة</div>
                 <p style="font-size: 0.8rem; color: #666;">انقر على الخريطة لتحديد الموقع بدقة:</p>
                 <div id="map-picker"></div>
                 <input type="hidden" id="lat">
@@ -294,7 +289,7 @@
             </div>
 
             <div class="card secret-box">
-                <div class="secret-title">🔒 3. الصندوق السري (خاص بالمالك فقط)</div>
+                <div class="secret-title">🔒 3. الصندوق السري (السحابي الخاص بالمالك)</div>
                 <div class="form-group">
                     <label>اسم المالك الأصلي</label>
                     <input type="text" id="ownerName" class="form-control">
@@ -313,14 +308,14 @@
                 </div>
             </div>
 
-            <button type="submit" id="submitBtn" class="btn-submit">حفظ ونشر العقار فوراً 🚀</button>
+            <button type="submit" id="submitBtn" class="btn-submit">حفظ ونشر العقار للسحاب فوراً ☁️🚀</button>
             <button type="button" id="cancelEditBtn" class="btn-submit btn-cancel-edit" onclick="cancelEdit()">إلغاء التعديل</button>
         </form>
 
         <div class="card" style="margin-top: 20px;">
-            <div class="card-title">إدارة العقارات الحالية (تعديل أو حذف)</div>
+            <div class="card-title">إدارة العقارات السحابية (تعديل أو حذف مباشر)</div>
             <div id="managePropertyList">
-                <p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">جاري تحميل العقارات...</p>
+                <p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">جاري جلب العقارات من السحاب...</p>
             </div>
         </div>
     </div>
@@ -331,13 +326,14 @@
 
     <script>
         const SECRET_PASSWORD = "123456";
-        let userPass = prompt("أدخل كلمة السر للدخول لوحة المالك:");
+        let userPass = prompt("أدخل كلمة السر لدخول لوحة المالك:");
         if (userPass !== SECRET_PASSWORD) {
             alert("كلمة السر خاطئة!");
             document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>غير مصرح بالدخول</h2>";
         }
 
         let mapPicker, currentMarker = null;
+        let allPropertiesCache = {};
 
         const pinColors = {
             'شقة عادية': '#00bfff',
@@ -405,6 +401,7 @@
             initPickerMap();
         };
 
+        // إعدادات الربط السحابي حصرياً مع فايربيس
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
@@ -414,9 +411,6 @@
         }
         const database = firebase.database();
 
-        let allPropertiesCache = {};
-
-        // دالة لضغط الصور تلقائياً وجعلها خفيفة وسريعة جداً للإرسال للسحاب
         function compressImage(file) {
             return new Promise((resolve) => {
                 if (!file) return resolve('');
@@ -425,8 +419,8 @@
                     const img = new Image();
                     img.onload = function () {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
+                        const MAX_WIDTH = 600;
+                        const MAX_HEIGHT = 600;
                         let width = img.width;
                         let height = img.height;
 
@@ -446,9 +440,7 @@
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // ضغط الجودة لـ 70% لتكون خفيفة جداً ولا تتسبب بتعليق الحفظ
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
                     };
                     img.src = e.target.result;
                 };
@@ -456,6 +448,7 @@
             });
         }
 
+        // الاستماع المباشر للسحاب لتحديث واجهة الإدارة والعقارات بشكل حي
         database.ref('properties').on('value', (snapshot) => {
             const listContainer = document.getElementById('managePropertyList');
             listContainer.innerHTML = '';
@@ -463,7 +456,7 @@
 
             const keys = Object.keys(allPropertiesCache);
             if (keys.length === 0) {
-                listContainer.innerHTML = '<p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">لا توجد عقارات مضافة حتى الآن.</p>';
+                listContainer.innerHTML = '<p style="font-size: 0.85rem; color: #777; text-align: center; padding: 10px;">لا توجد عقارات سحابية حتى الآن.</p>';
                 return;
             }
 
@@ -482,13 +475,13 @@
                     </div>
                     <div class="prop-actions">
                         <button class="btn-action btn-edit" type="button" onclick="startEdit('${key}')">تعديل</button>
-                        <button class="btn-action btn-delete" type="button" onclick="deleteProperty('${key}')">حذف</button>
+                        <button class="btn-action btn-delete" type="button" onclick="deleteCloudProperty('${key}')">حذف</button>
                     </div>
                 `;
                 listContainer.appendChild(itemDiv);
             });
         }, (error) => {
-            document.getElementById('managePropertyList').innerHTML = '<p style="font-size: 0.85rem; color: red; text-align: center;">خطأ في جلب البيانات من السحاب.</p>';
+            document.getElementById('managePropertyList').innerHTML = '<p style="font-size: 0.85rem; color: red; text-align: center;">خطأ في الاتصال بقاعدة البيانات السحابية.</p>';
         });
 
         window.startEdit = function(key) {
@@ -517,8 +510,8 @@
                 currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
 
-            document.getElementById('formTitleText').innerText = "2. تعديل العقار الحالي (رقم: " + prop.propertyId + ")";
-            document.getElementById('submitBtn').innerText = "تحديث العقار الآن 🔄";
+            document.getElementById('formTitleTextinnerText').innerText = "تعديل العقار السحابي (رقم: " + prop.propertyId + ")";
+            document.getElementById('submitBtn').innerText = "تحديث العقار على السحاب 🔄";
             document.getElementById('cancelEditBtn').style.display = 'block';
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -528,8 +521,8 @@
             document.getElementById('editKey').value = '';
             document.getElementById('property-form').reset();
             document.getElementById('whatsappNumber').value = "963949041251";
-            document.getElementById('formTitleText').innerText = "1. إضافة عقار جديد";
-            document.getElementById('submitBtn').innerText = "حفظ ونشر العقار فوراً 🚀";
+            document.getElementById('formTitleText').innerText = "1. إضافة عقار جديد للسحاب";
+            document.getElementById('submitBtn').innerText = "حفظ ونشر العقار للسحاب فوراً ☁️🚀";
             document.getElementById('cancelEditBtn').style.display = 'none';
             document.getElementById('lat').value = '';
             document.getElementById('lng').value = '';
@@ -539,31 +532,31 @@
             }
         };
 
-        window.deleteProperty = function(key) {
-            if (confirm("هل أنت متأكد من رغبتك في حذف هذا العقار نهائياً؟")) {
+        window.deleteCloudProperty = function(key) {
+            if (confirm("هل أنت متأكد من حذف العقار من السحاب نهائياً؟")) {
                 database.ref('properties/' + key).remove()
                 .then(() => {
                     database.ref('secret_properties/' + key).remove();
-                    alert("🗑️ تم حذف العقار بنجاح!");
+                    alert("🗑️ تم حذف العقار من السحاب بنجاح!");
                 })
                 .catch(err => alert("خطأ بالحذف: " + err.message));
             }
         };
 
-        window.handleFormSubmit = async function(e) {
+        window.handleCloudFormSubmit = async function(e) {
             e.preventDefault();
 
             const lat = document.getElementById('lat').value;
             const lng = document.getElementById('lng').value;
 
             if (!lat || !lng) {
-                alert("⚠️ تنبيه: يرجى النقر على الخريطة لتحديد موقع العقار بدقة قبل الحفظ!");
+                alert("⚠️ تنبيه: يرجى النقر على الخريطة لتحديد الموقع الجغرافي للعقار!");
                 return;
             }
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerText = "جاري الحفظ والنشر للسحاب... ⏳";
+            submitBtn.innerText = "جاري الحفظ على السحاب... ⏳";
 
             try {
                 const editKey = document.getElementById('editKey').value;
@@ -603,13 +596,13 @@
                 if (editKey) {
                     await database.ref('properties/' + editKey).set(propertyData);
                     await database.ref('secret_properties/' + editKey).set(secretData);
-                    alert("✨ تم تحديث العقار ونشره فوراً على خريطة المشترين!");
+                    alert("✨ تم تحديث العقار ونشره سحابياً للمشترين بنجاح!");
                     cancelEdit();
                 } else {
                     const newRef = database.ref('properties').push();
                     await newRef.set(propertyData);
                     await database.ref('secret_properties/' + newRef.key).set(secretData);
-                    alert("🚀 تم حفظ ونشر العقار الجديد بنجاح! أصبح ظاهراً الآن على لوحة المشتري.");
+                    alert("☁️🚀 تم حفظ ونشر العقار على السحاب وأصبح ظاهراً فوراً على خريطة المشتري!");
                     document.getElementById('property-form').reset();
                     document.getElementById('whatsappNumber').value = "963949041251";
                     document.getElementById('lat').value = '';
@@ -620,10 +613,10 @@
                     }
                 }
             } catch (err) {
-                alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
+                alert("❌ خطأ في الحفظ السحابي: " + err.message);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار الآن 🔄" : "حفظ ونشر العقار فوراً 🚀";
+                submitBtn.innerText = document.getElementById('editKey').value ? "تحديث العقار على السحاب 🔄" : "حفظ ونشر العقار للسحاب فوراً ☁️🚀";
             }
         };
     </script>
