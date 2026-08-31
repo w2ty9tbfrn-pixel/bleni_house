@@ -401,7 +401,7 @@
             initPickerMap();
         };
 
-        // إعدادات الربط السحابي حصرياً مع فايربيس
+        // تم ربط رابط قاعدة البيانات السحابية الحقيقي هنا بدقة تامة
         const firebaseConfig = {
             databaseURL: "https://bleni-house-default-rtdb.firebaseio.com/"
         };
@@ -510,7 +510,16 @@
                 currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(prop.type) }).addTo(mapPicker);
             }
 
-            document.getElementById('formTitleTextinnerText').innerText = "تعديل العقار السحابي (رقم: " + prop.propertyId + ")";
+            // جلب البيانات السرية الخاصة بالمالك إذا وجدت
+            database.ref('secret_properties/' + key).once('value', (secSnap) => {
+                const sec = secSnap.val() || {};
+                document.getElementById('ownerName').value = sec.ownerName || '';
+                document.getElementById('ownerPhone').value = sec.ownerPhone || '';
+                document.getElementById('photographer').value = sec.photographer || '';
+                document.getElementById('commission').value = sec.commission || '';
+            });
+
+            document.getElementById('formTitleText').innerText = "تعديل العقار السحابي (رقم: " + prop.propertyId + ")";
             document.getElementById('submitBtn').innerText = "تحديث العقار على السحاب 🔄";
             document.getElementById('cancelEditBtn').style.display = 'block';
 
