@@ -571,7 +571,7 @@
             document.getElementById('imageCounter').innerText = (currentImageIndex + 1) + '/' + currentImagesList.length;
         }
 
-        // رسم الدبابيس بشكل فوري وصاروخي بدون الانتظار لأي صور
+        // رسم الدبابيس بشكل فوري وصاروخي بناءً على الإحداثيات فقط
         function renderPropertiesFast(properties) {
             markersLayerGroup.clearLayers();
 
@@ -589,35 +589,41 @@
                         duration: 0.5
                     });
 
-                    // تحميل وتجميع الصور فقط عند النقر على الدبوس
-                    currentImagesList = [];
-                    if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
-                        currentImagesList = prop.images;
-                    } else if (prop.image) {
-                        currentImagesList = [prop.image];
-                    }
+                    // جلب الصور الخاصة بهذا العقار حصرياً من جدول الصور المنفصل عند الضغط فقط
+                    database.ref('property_images/' + prop.key).once('value', (imgSnap) => {
+                        const imgData = imgSnap.val();
+                        currentImagesList = [];
+                        if (imgData && imgData.images && Array.isArray(imgData.images)) {
+                            currentImagesList = imgData.images;
+                        } else if (prop.images && Array.isArray(prop.images)) {
+                            currentImagesList = prop.images;
+                        } else if (prop.image) {
+                            currentImagesList = [prop.image];
+                        }
 
-                    currentImageIndex = 0;
-                    if (currentImagesList.length > 0) {
-                        document.getElementById('modalImg').src = currentImagesList[0];
-                    } else {
-                        document.getElementById('modalImg').src = '';
-                    }
+                        currentImageIndex = 0;
+                        const imgElement = document.getElementById('modalImg');
+                        const prevBtn = document.getElementById('prevImgBtn');
+                        const nextBtn = document.getElementById('nextImgBtn');
+                        const counterBadge = document.getElementById('imageCounter');
 
-                    const prevBtn = document.getElementById('prevImgBtn');
-                    const nextBtn = document.getElementById('nextImgBtn');
-                    const counterBadge = document.getElementById('imageCounter');
+                        if (currentImagesList.length > 0) {
+                            imgElement.src = currentImagesList[0];
+                        } else {
+                            imgElement.src = '';
+                        }
 
-                    if (currentImagesList.length > 1) {
-                        prevBtn.style.display = 'flex';
-                        nextBtn.style.display = 'flex';
-                        counterBadge.style.display = 'block';
-                        counterBadge.innerText = `1/${currentImagesList.length}`;
-                    } else {
-                        prevBtn.style.display = 'none';
-                        nextBtn.style.display = 'none';
-                        counterBadge.style.display = 'none';
-                    }
+                        if (currentImagesList.length > 1) {
+                            prevBtn.style.display = 'flex';
+                            nextBtn.style.display = 'flex';
+                            counterBadge.style.display = 'block';
+                            counterBadge.innerText = `1/${currentImagesList.length}`;
+                        } else {
+                            prevBtn.style.display = 'none';
+                            nextBtn.style.display = 'none';
+                            counterBadge.style.display = 'none';
+                        }
+                    });
 
                     document.getElementById('modalPrice').innerText = prop.price || '';
                     document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
@@ -654,7 +660,7 @@
             });
         }
 
-        // جلب البيانات فور تحميل الصفحة مباشرة
+        // جلب البيانات النصية الخفيفة فقط فور تحميل الصفحة مباشرة
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
             renderPropertiesFast(allProperties);
