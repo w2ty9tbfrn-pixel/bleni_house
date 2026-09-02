@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>بلان هاوس | Bleni House</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- ملفات تصميم مكتبة التجميع الذكية للدبابيس -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <style>
         :root {
             --primary-green: #1b3b2b;
@@ -135,23 +132,6 @@
 
         .leaflet-control-zoom a:hover {
             background-color: var(--primary-green) !important;
-        }
-
-        .leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
-            -webkit-transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-            -moz-transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-            -o-transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-        }
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-            background-color: rgba(27, 59, 43, 0.85) !important;
-            border: 2px solid var(--accent-gold) !important;
-        }
-        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-            background-color: var(--primary-green) !important;
-            color: #ffffff !important;
-            font-weight: bold;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
         }
 
         .filter-modal-overlay {
@@ -305,7 +285,6 @@
             object-fit: cover;
         }
 
-        /* تنسيق أزرار التنقل بين الصور المتعددة وموقع الفيديو */
         .slider-nav-btn {
             position: absolute;
             top: 50%;
@@ -494,7 +473,6 @@
             <button class="modal-close-btn" onclick="closeModal()">×</button>
             <div class="modal-media-container">
                 <img id="modalImg" src="" alt="صورة العقار">
-                <!-- أزرار التقليب ومعلمة الصور -->
                 <button id="prevImgBtn" class="slider-nav-btn slider-prev" onclick="changeImage(-1)" style="display:none;">❮</button>
                 <button id="nextImgBtn" class="slider-nav-btn slider-next" onclick="changeImage(1)" style="display:none;">❯</button>
                 <div id="imageCounter" class="image-counter-badge" style="display:none;">1/1</div>
@@ -526,7 +504,6 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -572,13 +549,8 @@
         let currentImagesList = [];
         let currentImageIndex = 0;
         
-        const markersClusterGroup = L.markerClusterGroup({
-            maxClusterRadius: 80,
-            spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false,
-            zoomToBoundsOnClick: true
-        });
-        map.addLayer(markersClusterGroup);
+        // طبقة دبابيس عادية جداً بدون أي تجميع
+        const markersLayerGroup = L.layerGroup().addTo(map);
 
         function closeModal() {
             document.getElementById('propertyModal').style.display = 'none';
@@ -592,7 +564,6 @@
             document.getElementById('filterModal').style.display = 'none';
         }
 
-        // دالة التنقل بين صور العقار المتعددة
         function changeImage(direction) {
             if (!currentImagesList || currentImagesList.length === 0) return;
             currentImageIndex += direction;
@@ -605,9 +576,9 @@
             document.getElementById('imageCounter').innerText = (currentImageIndex + 1) + '/' + currentImagesList.length;
         }
 
-        // الحل الثالث: تحميل سريع وخفيف للإحداثيات والدبابيس أولاً دون تحميل الصور الثقيلة فوراً
-        function renderProperties(properties) {
-            markersClusterGroup.clearLayers();
+        // تسريع خارجي: جلب الإحداثيات فقط أولاً لتظهر الدبابيس فوراً خلال جزء من الثانية
+        function renderPropertiesFast(properties) {
+            markersLayerGroup.clearLayers();
 
             const propsArray = Object.keys(properties).map(k => ({ key: k, ...properties[k] })).filter(p => p && p.lat && p.lng);
             
@@ -620,13 +591,13 @@
                 });
 
                 marker.on('click', function() {
-                    // التعديل الأول: زوم 18 عند النقر على الدبوس
+                    // زوم 18 عند النقر على الدبوس
                     map.setView([prop.lat, prop.lng], 18, {
                         animate: true,
                         duration: 0.6
                     });
 
-                    // تجميع الصور (إذا كانت مصفوفة أو صورة فردية قديمة)
+                    // تحميل الصور عند النقر فقط لتكون الشاشة فائقة السرعة
                     currentImagesList = [];
                     if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
                         currentImagesList = prop.images;
@@ -641,7 +612,6 @@
                         document.getElementById('modalImg').src = '';
                     }
 
-                    // التحكم بإظهار أزرار التقليب والعداد
                     const prevBtn = document.getElementById('prevImgBtn');
                     const nextBtn = document.getElementById('nextImgBtn');
                     const counterBadge = document.getElementById('imageCounter');
@@ -688,13 +658,14 @@
                     document.getElementById('propertyModal').style.display = 'flex';
                 });
 
-                markersClusterGroup.addLayer(marker);
+                markersLayerGroup.addLayer(marker);
             });
         }
 
+        // جلب البيانات بالسرعة القصوى
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
-            renderProperties(allProperties);
+            renderPropertiesFast(allProperties);
         });
 
         function applyFilter() {
@@ -723,7 +694,7 @@
                 filtered[key] = prop;
             });
 
-            renderProperties(filtered);
+            renderPropertiesFast(filtered);
             closeFilterModal();
         }
 
@@ -731,7 +702,7 @@
             document.getElementById('filterType').value = '';
             document.getElementById('filterPrice').value = '';
             document.getElementById('filterLegal').value = '';
-            renderProperties(allProperties);
+            renderPropertiesFast(allProperties);
             closeFilterModal();
         }
     </script>
