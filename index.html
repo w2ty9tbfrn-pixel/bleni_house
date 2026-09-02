@@ -130,10 +130,6 @@
             font-size: 14px !important;
         }
 
-        .leaflet-control-zoom a:hover {
-            background-color: var(--primary-green) !important;
-        }
-
         .filter-modal-overlay {
             position: fixed;
             top: 0;
@@ -549,7 +545,6 @@
         let currentImagesList = [];
         let currentImageIndex = 0;
         
-        // طبقة دبابيس عادية جداً بدون أي تجميع
         const markersLayerGroup = L.layerGroup().addTo(map);
 
         function closeModal() {
@@ -576,28 +571,25 @@
             document.getElementById('imageCounter').innerText = (currentImageIndex + 1) + '/' + currentImagesList.length;
         }
 
-        // تسريع خارجي: جلب الإحداثيات فقط أولاً لتظهر الدبابيس فوراً خلال جزء من الثانية
+        // رسم الدبابيس بشكل فوري وصاروخي بدون الانتظار لأي صور
         function renderPropertiesFast(properties) {
             markersLayerGroup.clearLayers();
 
             const propsArray = Object.keys(properties).map(k => ({ key: k, ...properties[k] })).filter(p => p && p.lat && p.lng);
             
             propsArray.forEach(prop => {
-                const displayLat = Number(prop.lat);
-                const displayLng = Number(prop.lng);
-
-                const marker = L.marker([displayLat, displayLng], { 
+                const marker = L.marker([Number(prop.lat), Number(prop.lng)], { 
                     icon: createCustomIcon()
                 });
 
                 marker.on('click', function() {
-                    // زوم 18 عند النقر على الدبوس
+                    // زوم 18 عند النقر بسلاسة
                     map.setView([prop.lat, prop.lng], 18, {
                         animate: true,
-                        duration: 0.6
+                        duration: 0.5
                     });
 
-                    // تحميل الصور عند النقر فقط لتكون الشاشة فائقة السرعة
+                    // تحميل وتجميع الصور فقط عند النقر على الدبوس
                     currentImagesList = [];
                     if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
                         currentImagesList = prop.images;
@@ -662,7 +654,7 @@
             });
         }
 
-        // جلب البيانات بالسرعة القصوى
+        // جلب البيانات فور تحميل الصفحة مباشرة
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
             renderPropertiesFast(allProperties);
