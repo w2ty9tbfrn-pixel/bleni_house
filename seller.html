@@ -93,6 +93,47 @@
             outline: none;
         }
 
+        /* تنسيق معاينة الصور المتعددة المصغرة */
+        .images-preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .preview-thumb-container {
+            position: relative;
+            width: 65px;
+            height: 65px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            background: #eee;
+        }
+
+        .preview-thumb-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-thumb-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .secret-box {
             background-color: var(--secret-bg);
             border: 1px solid var(--secret-border);
@@ -310,8 +351,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label>اختيار صورة العقار 📷</label>
-                    <input type="file" id="imageFile" class="form-control" accept="image/*">
+                    <label>صور العقار المتعددة 📷 (يمكنك اختيار عدة صور دفعة واحدة)</label>
+                    <input type="file" id="imageFiles" class="form-control" accept="image/*" multiple onchange="handleImagesSelection(event)">
+                    <div id="imagesPreviewContainer" class="images-preview-grid"></div>
                 </div>
 
                 <div class="form-group">
@@ -387,6 +429,7 @@
 
         let mapPicker, currentMarker = null;
         let allPropertiesCache = {};
+        let selectedImagesBase64 = []; // مصفوفة لتخزين الصور المعالجة
 
         const UNIFIED_PIN_COLOR = '#ffd700';
 
@@ -465,6 +508,7 @@
         }
         const database = firebase.database();
 
+        // دالة ضغط الصورة الواحدة وتحويلها إلى Base64
         function compressImage(file) {
             return new Promise((resolve) => {
                 if (!file) return resolve('');
@@ -502,6 +546,40 @@
             });
         }
 
+        // معالجة اختيار صور متعددة وعرض المعاينة المصغرة
+        async function handleImagesSelection(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const compressedBase64 = await compressImage(files[i]);
+                if (compressedBase64) {
+                    selectedImagesBase64.push(compressedBase64);
+                }
+            }
+            renderImagesPreview();
+        }
+
+        function renderImagesPreview() {
+            const container = document.getElementById('imagesPreviewContainer');
+            container.innerHTML = '';
+
+            selectedImagesBase64.forEach((imgSrc, index) => {
+                const thumbDiv = document.createElement('div');
+                thumbDiv.className = 'preview-thumb-container';
+                thumbDiv.innerHTML = `
+                    <img src="${imgSrc}" alt="معاينة">
+                    <button type="button" class="remove-thumb-btn" onclick="removeImage(${index})">×</button>
+                `;
+                container.appendChild(thumbDiv);
+            });
+        }
+
+        window.removeImage = function(index) {
+            selectedImagesBase64.splice(index, 1);
+            renderImagesPreview();
+        };
+
         database.ref('properties').on('value', (snapshot) => {
             const listContainer = document.getElementById('managePropertyList');
             listContainer.innerHTML = '';
@@ -515,12 +593,20 @@
 
             keys.forEach(key => {
                 const prop = allPropertiesCache[key];
+                // جلب صورة مصغرة للعرض (إما أول صورة من المصفوفة أو الصورة الفردية القديمة)
+                let thumbImg = 'https://via.placeholder.com/50';
+                if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
+                    thumbImg = prop.images[0];
+                } else if (prop.image) {
+                    thumbImg = prop.image;
+                }
+
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'property-list-item';
                 
                 itemDiv.innerHTML = `
                     <div class="prop-info">
-                        <img src="${prop.image || 'https://via.placeholder.com/50'}" class="prop-thumb" alt="صورة">
+                        <img src="${thumbImg}" class="prop-thumb" alt="صورة">
                         <div class="prop-details">
                             <h4>عقار #${prop.propertyId || '---'} (${prop.type || ''})</h4>
                             <p>${prop.price || ''} - ${prop.location || ''}</p>
@@ -554,6 +640,15 @@
             document.getElementById('instagramVideoUrl').value = prop.instagramVideoUrl || '';
             document.getElementById('whatsappNumber').value = prop.whatsappNumber || '963949041251';
             
+            // تحميل الصور المتعددة أو الصورة الفردية القديمة لتعديلها
+            selectedImagesBase64 = [];
+            if (prop.images && Array.isArray(prop.images)) {
+                selectedImagesBase64 = [...prop.images];
+            } else if (prop.image) {
+                selectedImagesBase64 = [prop.image];
+            }
+            renderImagesPreview();
+
             document.getElementById('lat').value = prop.lat || '';
             document.getElementById('lng').value = prop.lng || '';
 
@@ -573,6 +668,8 @@
         window.cancelEdit = function() {
             document.getElementById('editKey').value = '';
             document.getElementById('property-form').reset();
+            selectedImagesBase64 = [];
+            renderImagesPreview();
             document.getElementById('whatsappNumber').value = "963949041251";
             document.getElementById('formTitleText').innerText = "1. إضافة عقار جديد للسحاب";
             document.getElementById('submitBtn').innerText = "حفظ ونشر العقار للسحاب فوراً ☁️🚀";
@@ -607,19 +704,17 @@
                 return;
             }
 
+            if (selectedImagesBase64.length === 0) {
+                alert("⚠️ تنبيه: يرجى اختيار صورة واحدة على الأقل للعقار!");
+                return;
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerText = "جاري الحفظ على السحاب... ⏳";
 
             try {
                 const editKey = document.getElementById('editKey').value;
-                const imgFile = document.getElementById('imageFile').files[0];
-
-                let imageData = imgFile ? await compressImage(imgFile) : '';
-
-                if (editKey && allPropertiesCache[editKey]) {
-                    if (!imageData) imageData = allPropertiesCache[editKey].image || '';
-                }
 
                 const propertyData = {
                     propertyId: document.getElementById('propertyId').value,
@@ -635,7 +730,8 @@
                     whatsappNumber: document.getElementById('whatsappNumber').value,
                     lat: parseFloat(lat),
                     lng: parseFloat(lng),
-                    image: imageData
+                    images: selectedImagesBase64, // حفظ مصفوفة الصور كاملة
+                    image: selectedImagesBase64[0] // الصورة الأولى كاحتياط
                 };
 
                 const secretData = {
@@ -657,6 +753,8 @@
                     await database.ref('secret_properties/' + newRef.key).set(secretData);
                     alert("☁️🚀 تم حفظ ونشر العقار على السحاب وأصبح ظاهراً فوراً على خريطة المشتري!");
                     document.getElementById('property-form').reset();
+                    selectedImagesBase64 = [];
+                    renderImagesPreview();
                     document.getElementById('whatsappNumber').value = "963949041251";
                     document.getElementById('lat').value = '';
                     document.getElementById('lng').value = '';
