@@ -93,7 +93,6 @@
             outline: none;
         }
 
-        /* تنسيق معاينة الصور المتعددة المصغرة */
         .images-preview-grid {
             display: flex;
             flex-wrap: wrap;
@@ -429,7 +428,7 @@
 
         let mapPicker, currentMarker = null;
         let allPropertiesCache = {};
-        let selectedImagesBase64 = []; // مصفوفة لتخزين الصور المعالجة
+        let selectedImagesBase64 = [];
 
         const UNIFIED_PIN_COLOR = '#ffd700';
 
@@ -508,7 +507,6 @@
         }
         const database = firebase.database();
 
-        // دالة ضغط الصورة الواحدة وتحويلها إلى Base64
         function compressImage(file) {
             return new Promise((resolve) => {
                 if (!file) return resolve('');
@@ -546,7 +544,6 @@
             });
         }
 
-        // معالجة اختيار صور متعددة وعرض المعاينة المصغرة
         async function handleImagesSelection(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
@@ -580,6 +577,7 @@
             renderImagesPreview();
         };
 
+        // جلب العقارات وإدارة القائمة في لوحة المالك (سواء كانت الصور مخزنة داخل العقار أو منفصلة)
         database.ref('properties').on('value', (snapshot) => {
             const listContainer = document.getElementById('managePropertyList');
             listContainer.innerHTML = '';
@@ -593,31 +591,36 @@
 
             keys.forEach(key => {
                 const prop = allPropertiesCache[key];
-                // جلب صورة مصغرة للعرض (إما أول صورة من المصفوفة أو الصورة الفردية القديمة)
                 let thumbImg = 'https://via.placeholder.com/50';
-                if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
-                    thumbImg = prop.images[0];
-                } else if (prop.image) {
-                    thumbImg = prop.image;
-                }
-
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'property-list-item';
                 
-                itemDiv.innerHTML = `
-                    <div class="prop-info">
-                        <img src="${thumbImg}" class="prop-thumb" alt="صورة">
-                        <div class="prop-details">
-                            <h4>عقار #${prop.propertyId || '---'} (${prop.type || ''})</h4>
-                            <p>${prop.price || ''} - ${prop.location || ''}</p>
+                // جلب الصور من جدول الصور المنفصل إن وجد، أو من العقار مباشرة كاحتياط
+                database.ref('property_images/' + key).once('value', (imgSnap) => {
+                    const imgData = imgSnap.val();
+                    if (imgData && imgData.images && imgData.images.length > 0) {
+                        thumbImg = imgData.images[0];
+                    } else if (prop.images && prop.images.length > 0) {
+                        thumbImg = prop.images[0];
+                    } else if (prop.image) {
+                        thumbImg = prop.image;
+                    }
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'property-list-item';
+                    itemDiv.innerHTML = `
+                        <div class="prop-info">
+                            <img src="${thumbImg}" class="prop-thumb" alt="صورة">
+                            <div class="prop-details">
+                                <h4>عقار #${prop.propertyId || '---'} (${prop.type || ''})</h4>
+                                <p>${prop.price || ''} - ${prop.location || ''}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="prop-actions">
-                        <button class="btn-action btn-edit" type="button" onclick="startEdit('${key}')">تعديل</button>
-                        <button class="btn-action btn-delete" type="button" onclick="deleteCloudProperty('${key}')">حذف</button>
-                    </div>
-                `;
-                listContainer.appendChild(itemDiv);
+                        <div class="prop-actions">
+                            <button class="btn-action btn-edit" type="button" onclick="startEdit('${key}')">تعديل</button>
+                            <button class="btn-action btn-delete" type="button" onclick="deleteCloudProperty('${key}')">حذف</button>
+                        </div>
+                    `;
+                    listContainer.appendChild(itemDiv);
+                });
             });
         }, (error) => {
             document.getElementById('managePropertyList').innerHTML = '<p style="font-size: 0.85rem; color: red; text-align: center;">خطأ في الاتصال بقاعدة البيانات السحابية.</p>';
@@ -640,14 +643,28 @@
             document.getElementById('instagramVideoUrl').value = prop.instagramVideoUrl || '';
             document.getElementById('whatsappNumber').value = prop.whatsappNumber || '963949041251';
             
-            // تحميل الصور المتعددة أو الصورة الفردية القديمة لتعديلها
-            selectedImagesBase64 = [];
-            if (prop.images && Array.isArray(prop.images)) {
-                selectedImagesBase64 = [...prop.images];
-            } else if (prop.image) {
-                selectedImagesBase64 = [prop.image];
-            }
-            renderImagesPreview();
+            // جلب الصور الخاصة بالعقار عند التعديل
+            database.ref('property_images/' + key).once('value', (imgSnap) => {
+                const imgData = imgSnap.val();
+                selectedImagesBase64 = [];
+                if (imgData && imgData.images) {
+                    selectedImagesBase64 = [...imgData.images];
+                } else if (prop.images) {
+                    selectedImagesBase64 = [...prop.images];
+                } else if (prop.image) {
+                    selectedImagesBase64 = [prop.image];
+                }
+                renderImagesPreview();
+            });
+
+            // جلب البيانات السرية
+            database.ref('secret_properties/' + key).once('value', (secretSnap) => {
+                const sec = secretSnap.val() || {};
+                document.getElementById('ownerName').value = sec.ownerName || '';
+                document.getElementById('ownerPhone').value = sec.ownerPhone || '';
+                document.getElementById('photographer').value = sec.photographer || '';
+                document.getElementById('commission').value = sec.commission || '';
+            });
 
             document.getElementById('lat').value = prop.lat || '';
             document.getElementById('lng').value = prop.lng || '';
@@ -687,6 +704,7 @@
                 database.ref('properties/' + key).remove()
                 .then(() => {
                     database.ref('secret_properties/' + key).remove();
+                    database.ref('property_images/' + key).remove();
                     alert("🗑️ تم حذف العقار من السحاب بنجاح!");
                 })
                 .catch(err => alert("خطأ بالحذف: " + err.message));
@@ -716,6 +734,7 @@
             try {
                 const editKey = document.getElementById('editKey').value;
 
+                // 1. البيانات الجغرافية الأساسية فقط (بدون الصور الثقيلة) لتظهر الدبابيس بسرعة البرق لدى المشتري
                 const propertyData = {
                     propertyId: document.getElementById('propertyId').value,
                     type: document.getElementById('type').value,
@@ -729,11 +748,15 @@
                     instagramVideoUrl: document.getElementById('instagramVideoUrl').value,
                     whatsappNumber: document.getElementById('whatsappNumber').value,
                     lat: parseFloat(lat),
-                    lng: parseFloat(lng),
-                    images: selectedImagesBase64, // حفظ مصفوفة الصور كاملة
-                    image: selectedImagesBase64[0] // الصورة الأولى كاحتياط
+                    lng: parseFloat(lng)
                 };
 
+                // 2. فصل الصور في جدول مستقل تماماً (property_images) لكي لا تبطئ تحميل الخريطة
+                const imagesData = {
+                    images: selectedImagesBase64
+                };
+
+                // 3. البيانات السرية في جدول مستقل
                 const secretData = {
                     propertyId: document.getElementById('propertyId').value,
                     ownerName: document.getElementById('ownerName').value,
@@ -744,13 +767,17 @@
 
                 if (editKey) {
                     await database.ref('properties/' + editKey).set(propertyData);
+                    await database.ref('property_images/' + editKey).set(imagesData);
                     await database.ref('secret_properties/' + editKey).set(secretData);
                     alert("✨ تم تحديث العقار ونشره سحابياً للمشترين بنجاح!");
                     cancelEdit();
                 } else {
                     const newRef = database.ref('properties').push();
+                    const newKey = newRef.key;
                     await newRef.set(propertyData);
-                    await database.ref('secret_properties/' + newRef.key).set(secretData);
+                    await database.ref('property_images/' + newKey).set(imagesData);
+                    await database.ref('secret_properties/' + newKey).set(secretData);
+                    
                     alert("☁️🚀 تم حفظ ونشر العقار على السحاب وأصبح ظاهراً فوراً على خريطة المشتري!");
                     document.getElementById('property-form').reset();
                     selectedImagesBase64 = [];
