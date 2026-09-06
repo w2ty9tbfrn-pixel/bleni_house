@@ -25,7 +25,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: var(--bg-light);
+            background-color: var(--primary-green);
         }
 
         .app-header {
@@ -78,7 +78,16 @@
             height: calc(100% - 60px);
             margin-top: 60px;
             z-index: 1;
-            background: #111;
+            background: var(--primary-green);
+        }
+
+        .leaflet-tile {
+            filter: none !important;
+        }
+
+        .leaflet-container {
+            background: var(--primary-green) !important;
+            outline: none;
         }
 
         .leaflet-marker-pane {
@@ -445,17 +454,6 @@
                 <label>السعر التقريبي ($):</label>
                 <input type="number" id="filterPrice" placeholder="مثال: 50000 (يشمل نطاق +/- 10,000)">
             </div>
-            <div class="filter-group">
-                <label>نوع السند القانوني / الطابو:</label>
-                <select id="filterLegal">
-                    <option value="">الكل</option>
-                    <option value="طابو أخضر">طابو أخضر</option>
-                    <option value="حكم محكمة">حكم محكمة</option>
-                    <option value="رخصة بناء">رخصة بناء</option>
-                    <option value="طابو زراعي">طابو زراعي</option>
-                    <option value="غير معروف">غير معروف</option>
-                </select>
-            </div>
             <div class="filter-actions">
                 <button class="apply-filter-btn" onclick="applyFilter()">تطبيق الفلتر</button>
                 <button class="reset-filter-btn" onclick="resetFilter()">إعادة ضبط</button>
@@ -482,6 +480,7 @@
                 <div class="property-lines">
                     <div class="property-line-item"><span>رقم العقار:</span> <span id="modalPropId"></span></div>
                     <div class="property-line-item"><span>نوع العقار:</span> <span id="modalType"></span></div>
+                    <div class="property-line-item" id="modalFloorItem" style="display:none;"><span>الطابق:</span> <span id="modalFloor"></span></div>
                     <div class="property-line-item"><span>المساحة:</span> <span id="modalArea"></span></div>
                     <div class="property-line-item"><span>التقسيم:</span> <span id="modalLayout"></span></div>
                     <div class="property-line-item"><span>السند القانوني:</span> <span id="modalLegal"></span></div>
@@ -507,13 +506,21 @@
         const map = L.map('map', { 
             zoomControl: true,
             minZoom: 3,
-            maxZoom: 20
+            maxZoom: 20,
+            inertia: true,
+            inertiaDeceleration: 3000,
+            fadeAnimation: true,
+            zoomAnimation: true,
+            markerZoomAnimation: true
         }).setView([33.4350, 36.1900], 11);
 
         L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-            attribution: '&copy; Google Maps'
+            attribution: '&copy; Google Maps',
+            keepBuffer: 8,
+            updateWhenIdle: false,
+            updateWhenZooming: false
         }).addTo(map);
 
         const UNIFIED_PIN_COLOR = '#ffd700';
@@ -571,96 +578,114 @@
             document.getElementById('imageCounter').innerText = (currentImageIndex + 1) + '/' + currentImagesList.length;
         }
 
-        // رسم الدبابيس بشكل فوري وصاروخي بناءً على الإحداثيات فقط
         function renderPropertiesFast(properties) {
             markersLayerGroup.clearLayers();
 
             const propsArray = Object.keys(properties).map(k => ({ key: k, ...properties[k] })).filter(p => p && p.lat && p.lng);
             
-            propsArray.forEach(prop => {
-                const marker = L.marker([Number(prop.lat), Number(prop.lng)], { 
-                    icon: createCustomIcon()
-                });
+            const batchSize = 30;
+            let index = 0;
 
-                marker.on('click', function() {
-                    // زوم 18 عند النقر بسلاسة
-                    map.setView([prop.lat, prop.lng], 18, {
-                        animate: true,
-                        duration: 0.5
+            function processBatch() {
+                const chunk = propsArray.slice(index, index + batchSize);
+                chunk.forEach(prop => {
+                    const marker = L.marker([Number(prop.lat), Number(prop.lng)], { 
+                        icon: createCustomIcon()
                     });
 
-                    // جلب الصور الخاصة بهذا العقار حصرياً من جدول الصور المنفصل عند الضغط فقط
-                    database.ref('property_images/' + prop.key).once('value', (imgSnap) => {
-                        const imgData = imgSnap.val();
-                        currentImagesList = [];
-                        if (imgData && imgData.images && Array.isArray(imgData.images)) {
-                            currentImagesList = imgData.images;
-                        } else if (prop.images && Array.isArray(prop.images)) {
-                            currentImagesList = prop.images;
-                        } else if (prop.image) {
-                            currentImagesList = [prop.image];
-                        }
+                    marker.on('click', function() {
+                        map.setView([prop.lat, prop.lng], 18, {
+                            animate: true,
+                            duration: 0.5
+                        });
 
-                        currentImageIndex = 0;
-                        const imgElement = document.getElementById('modalImg');
-                        const prevBtn = document.getElementById('prevImgBtn');
-                        const nextBtn = document.getElementById('nextImgBtn');
-                        const counterBadge = document.getElementById('imageCounter');
+                        database.ref('property_images/' + prop.key).once('value', (imgSnap) => {
+                            const imgData = imgSnap.val();
+                            currentImagesList = [];
+                            if (imgData && imgData.images && Array.isArray(imgData.images)) {
+                                currentImagesList = imgData.images;
+                            } else if (prop.images && Array.isArray(prop.images)) {
+                                currentImagesList = prop.images;
+                            } else if (prop.image) {
+                                currentImagesList = [prop.image];
+                            }
 
-                        if (currentImagesList.length > 0) {
-                            imgElement.src = currentImagesList[0];
+                            currentImageIndex = 0;
+                            const imgElement = document.getElementById('modalImg');
+                            const prevBtn = document.getElementById('prevImgBtn');
+                            const nextBtn = document.getElementById('nextImgBtn');
+                            const counterBadge = document.getElementById('imageCounter');
+
+                            if (currentImagesList.length > 0) {
+                                imgElement.src = currentImagesList[0];
+                            } else {
+                                imgElement.src = '';
+                            }
+
+                            if (currentImagesList.length > 1) {
+                                prevBtn.style.display = 'flex';
+                                nextBtn.style.display = 'flex';
+                                counterBadge.style.display = 'block';
+                                counterBadge.innerText = `1/${currentImagesList.length}`;
+                            } else {
+                                prevBtn.style.display = 'none';
+                                nextBtn.style.display = 'none';
+                                counterBadge.style.display = 'none';
+                            }
+                        });
+
+                        document.getElementById('modalPrice').innerText = prop.price || '';
+                        document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
+                        document.getElementById('modalPropId').innerText = prop.propertyId || '---';
+                        document.getElementById('modalType').innerText = prop.type || '';
+                        
+                        const floorItem = document.getElementById('modalFloorItem');
+                        if (prop.floor && prop.floor.trim() !== '') {
+                            document.getElementById('modalFloor').innerText = prop.floor;
+                            floorItem.style.display = 'flex';
                         } else {
-                            imgElement.src = '';
+                            floorItem.style.display = 'none';
                         }
 
-                        if (currentImagesList.length > 1) {
-                            prevBtn.style.display = 'flex';
-                            nextBtn.style.display = 'flex';
-                            counterBadge.style.display = 'block';
-                            counterBadge.innerText = `1/${currentImagesList.length}`;
+                        document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
+                        document.getElementById('modalLayout').innerText = prop.layout || '';
+                        document.getElementById('modalLegal').innerText = prop.legalStatus || '';
+                        document.getElementById('modalBazar').innerText = prop.bazarStatus || '';
+
+                        const notesContainer = document.getElementById('modalNotesContainer');
+                        if (prop.notes) {
+                            document.getElementById('modalNotes').innerText = prop.notes;
+                            notesContainer.style.display = 'block';
                         } else {
-                            prevBtn.style.display = 'none';
-                            nextBtn.style.display = 'none';
-                            counterBadge.style.display = 'none';
+                            notesContainer.style.display = 'none';
                         }
+
+                        const phoneNum = prop.whatsappNumber || '963949041251';
+                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=` + encodeURIComponent(`مرحباً، أنا مهتم بالعقار رقم (${prop.propertyId}) وأرغب ببعض التفاصيل الإضافية.`);
+
+                        const videoBtn = document.getElementById('modalVideoBtn');
+                        if (prop.instagramVideoUrl) {
+                            videoBtn.style.display = 'inline-flex';
+                            videoBtn.href = prop.instagramVideoUrl;
+                        } else {
+                            videoBtn.style.display = 'none';
+                        }
+
+                        document.getElementById('propertyModal').style.display = 'flex';
                     });
 
-                    document.getElementById('modalPrice').innerText = prop.price || '';
-                    document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
-                    document.getElementById('modalPropId').innerText = prop.propertyId || '---';
-                    document.getElementById('modalType').innerText = prop.type || '';
-                    document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
-                    document.getElementById('modalLayout').innerText = prop.layout || '';
-                    document.getElementById('modalLegal').innerText = prop.legalStatus || '';
-                    document.getElementById('modalBazar').innerText = prop.bazarStatus || '';
-
-                    const notesContainer = document.getElementById('modalNotesContainer');
-                    if (prop.notes) {
-                        document.getElementById('modalNotes').innerText = prop.notes;
-                        notesContainer.style.display = 'block';
-                    } else {
-                        notesContainer.style.display = 'none';
-                    }
-
-                    const phoneNum = prop.whatsappNumber || '963949041251';
-                    document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=` + encodeURIComponent(`مرحباً، أنا مهتم بالعقار رقم (${prop.propertyId}) وأرغب ببعض التفاصيل الإضافية.`);
-
-                    const videoBtn = document.getElementById('modalVideoBtn');
-                    if (prop.instagramVideoUrl) {
-                        videoBtn.style.display = 'inline-flex';
-                        videoBtn.href = prop.instagramVideoUrl;
-                    } else {
-                        videoBtn.style.display = 'none';
-                    }
-
-                    document.getElementById('propertyModal').style.display = 'flex';
+                    markersLayerGroup.addLayer(marker);
                 });
 
-                markersLayerGroup.addLayer(marker);
-            });
+                index += batchSize;
+                if (index < propsArray.length) {
+                    setTimeout(processBatch, 4);
+                }
+            }
+
+            processBatch();
         }
 
-        // جلب البيانات النصية الخفيفة فقط فور تحميل الصفحة مباشرة
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
             renderPropertiesFast(allProperties);
@@ -669,7 +694,6 @@
         function applyFilter() {
             const selectedType = document.getElementById('filterType').value;
             const priceInput = document.getElementById('filterPrice').value;
-            const selectedLegal = document.getElementById('filterLegal').value;
 
             const targetPrice = priceInput ? parseFloat(priceInput) : null;
 
@@ -687,8 +711,6 @@
                     }
                 }
 
-                if (selectedLegal && prop.legalStatus !== selectedLegal) return;
-
                 filtered[key] = prop;
             });
 
@@ -699,7 +721,6 @@
         function resetFilter() {
             document.getElementById('filterType').value = '';
             document.getElementById('filterPrice').value = '';
-            document.getElementById('filterLegal').value = '';
             renderPropertiesFast(allProperties);
             closeFilterModal();
         }
