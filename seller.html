@@ -629,7 +629,7 @@
             document.getElementById('managePropertyList').innerHTML = '<p style="font-size: 0.85rem; color: red; text-align: center;">خطأ في الاتصال بقاعدة البيانات السحابية.</p>';
         });
 
-        window.startEdit = function(key) {
+        window.startEdit = async function(key) {
             const prop = allPropertiesCache[key];
             if (!prop) return;
 
@@ -647,7 +647,8 @@
             document.getElementById('instagramVideoUrl').value = prop.instagramVideoUrl || '';
             document.getElementById('whatsappNumber').value = prop.whatsappNumber || '963949041251';
             
-            database.ref('property_images/' + key).once('value', (imgSnap) => {
+            try {
+                const imgSnap = await database.ref('property_images/' + key).once('value');
                 const imgData = imgSnap.val();
                 selectedImagesBase64 = [];
                 if (imgData && imgData.images) {
@@ -658,15 +659,24 @@
                     selectedImagesBase64 = [prop.image];
                 }
                 renderImagesPreview();
-            });
+            } catch(e) {
+                selectedImagesBase64 = [];
+                renderImagesPreview();
+            }
 
-            database.ref('secret_properties/' + key).once('value', (secretSnap) => {
+            try {
+                const secretSnap = await database.ref('secret_properties/' + key).once('value');
                 const sec = secretSnap.val() || {};
                 document.getElementById('ownerName').value = sec.ownerName || '';
                 document.getElementById('ownerPhone').value = sec.ownerPhone || '';
                 document.getElementById('photographer').value = sec.photographer || '';
                 document.getElementById('commission').value = sec.commission || '';
-            });
+            } catch(e) {
+                document.getElementById('ownerName').value = '';
+                document.getElementById('ownerPhone').value = '';
+                document.getElementById('photographer').value = '';
+                document.getElementById('commission').value = '';
+            }
 
             document.getElementById('lat').value = prop.lat || '';
             document.getElementById('lng').value = prop.lng || '';
