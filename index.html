@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>بلان هاوس | Bleni House</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- إضافة مكتبة Spirefy لفك تداخل الدبابيس المتطابقة تماماً -->
     <script src="https://unpkg.com/leaflet.spiderfy@0.81/dist/oms.min.js"></script>
     <style>
         :root {
@@ -23,9 +22,11 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* استخدام dvh ليتكيف مع أشرطة متصفح الجوال بدقة ومنع ظهور المساحات الخضراء الزائدة */
         body, html {
             width: 100%;
-            height: 100%;
+            height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             background-color: var(--primary-green);
         }
@@ -75,9 +76,10 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
+        /* ضبط الخريطة لتبدأ تماماً تحت الهيدر وتأخذ المساحة المتبقية بدقة باستخدام calc مع dvh */
         #map {
             width: 100%;
-            height: calc(100% - 60px);
+            height: calc(100dvh - 60px);
             margin-top: 60px;
             z-index: 1;
             background: var(--primary-green);
@@ -525,7 +527,6 @@
             updateWhenZooming: false
         }).addTo(map);
 
-        // تفعيل نظام Spiderfy لفك تداخل الدبابيس المتطابقة تماماً في نفس الإحداثيات
         const oms = new OverlappingMarkerSpiderfier(map, {
             keepSpiderfied: true,
             legWeight: 3,
@@ -589,7 +590,7 @@
 
         function renderPropertiesFast(properties) {
             markersLayerGroup.clearLayers();
-            oms.clearMarkers(); // مسح الدبابيس السابقة من نظام Spiderfy
+            oms.clearMarkers();
 
             const propsArray = Object.keys(properties).map(k => ({ key: k, ...properties[k] })).filter(p => p && p.lat && p.lng);
             
@@ -603,14 +604,8 @@
                         icon: createCustomIcon()
                     });
 
-                    // التعامل مع النقر عبر نظام OverlappingMarkerSpiderfier لفك العقارات المتطابقة
                     oms.addMarker(marker);
 
-                    marker.on('spiderfied', function() {
-                        // عند تفرع الدبابيس، نقفل النافذة المنفردة لو كانت مفتوحة لتجنب التداخل
-                    });
-
-                    // عند النقر على الدبوس (سواء كان مفرداً أو تم فكه عبر spiderfy)
                     marker.on('click', function() {
                         map.setView([prop.lat, prop.lng], 18, {
                             animate: true,
