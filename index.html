@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>بلان هاوس | Bleni House</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- إضافة مكتبة Spirefy لفك تداخل الدبابيس المتطابقة تماماً -->
     <script src="https://unpkg.com/leaflet.spiderfy@0.81/dist/oms.min.js"></script>
     <style>
         :root {
@@ -22,7 +23,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* استخدام dvh ليتكيف مع أشرطة متصفح الجوال بدقة ومنع ظهور المساحات الخضراء الزائدة */
         body, html {
             width: 100%;
             height: 100vh;
@@ -76,7 +76,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
-        /* ضبط الخريطة لتبدأ تماماً تحت الهيدر وتأخذ المساحة المتبقية بدقة باستخدام calc مع dvh */
         #map {
             width: 100%;
             height: calc(100dvh - 60px);
