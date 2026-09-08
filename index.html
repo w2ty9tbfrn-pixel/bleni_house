@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>بلان هاوس | Bleni House</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- إضافة ملفات تصميم تجميع وتوزيع الدبابيس (MarkerCluster) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <style>
         :root {
             --primary-green: #1b3b2b;
@@ -22,8 +25,8 @@
         }
 
         body, html {
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             background-color: var(--primary-green);
         }
@@ -74,9 +77,13 @@
         }
 
         #map {
+            position: absolute;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%;
-            height: calc(100% - 60px);
-            margin-top: 60px;
+            height: calc(100vh - 60px);
             z-index: 1;
             background: var(--primary-green);
         }
@@ -499,6 +506,8 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- إضافة مكتبة توزيع الدبابيس المتراكمة (MarkerCluster) -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -522,6 +531,11 @@
             updateWhenIdle: false,
             updateWhenZooming: false
         }).addTo(map);
+
+        // تصحيح فوري لحجم الخريطة لضمان ملء الشاشة تماماً وإلغاء أي فراغ أخضر
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 200);
 
         const UNIFIED_PIN_COLOR = '#ffd700';
 
@@ -552,7 +566,14 @@
         let currentImagesList = [];
         let currentImageIndex = 0;
         
-        const markersLayerGroup = L.layerGroup().addTo(map);
+        // إنشاء مجموعة دبابيس تدعم التجميع والتوزيع التلقائي (Spiderfy) عند التداخل
+        const markersClusterGroup = L.markerClusterGroup({
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true,
+            maxClusterRadius: 40
+        });
+        map.addLayer(markersClusterGroup);
 
         function closeModal() {
             document.getElementById('propertyModal').style.display = 'none';
@@ -579,7 +600,7 @@
         }
 
         function renderPropertiesFast(properties) {
-            markersLayerGroup.clearLayers();
+            markersClusterGroup.clearLayers();
 
             const propsArray = Object.keys(properties).map(k => ({ key: k, ...properties[k] })).filter(p => p && p.lat && p.lng);
             
@@ -674,7 +695,7 @@
                         document.getElementById('propertyModal').style.display = 'flex';
                     });
 
-                    markersLayerGroup.addLayer(marker);
+                    markersClusterGroup.addLayer(marker);
                 });
 
                 index += batchSize;
@@ -689,6 +710,7 @@
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
             renderPropertiesFast(allProperties);
+            setTimeout(() => { map.invalidateSize(); }, 150);
         });
 
         function applyFilter() {
