@@ -61,6 +61,12 @@
             color: var(--accent-gold);
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .filter-btn-header {
             background-color: var(--accent-gold);
             color: var(--primary-green);
@@ -74,6 +80,46 @@
             align-items: center;
             gap: 5px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* صندوق البحث السريع برقم العقار على اليمين */
+        .quick-search-box {
+            position: fixed;
+            top: 70px;
+            right: 12px;
+            background: rgba(27, 59, 43, 0.95);
+            border: 2px solid var(--accent-gold);
+            padding: 8px 10px;
+            border-radius: 10px;
+            z-index: 999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 230px;
+        }
+
+        .quick-search-box input {
+            width: 110px;
+            padding: 5px 8px;
+            border: 1px solid var(--accent-gold);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            outline: none;
+            background: #fff;
+            color: var(--text-dark);
+            text-align: center;
+        }
+
+        .quick-search-box button {
+            background-color: var(--accent-gold);
+            color: var(--primary-green);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.78rem;
+            cursor: pointer;
         }
 
         #map {
@@ -284,7 +330,6 @@
             justify-content: center;
         }
 
-        /* زر المشاركة بجانب زر الإغلاق */
         .modal-share-btn {
             position: absolute;
             top: 10px;
@@ -304,7 +349,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        /* إشعار منبثق عند نسخ الرابط */
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -467,10 +511,18 @@
         <div class="brand-title">
             Bleni House <span>| بلان هاوس</span>
         </div>
-        <button class="filter-btn-header" onclick="openFilterModal()">
-            🔍 فلترة العقارات
-        </button>
+        <div class="header-actions">
+            <button class="filter-btn-header" onclick="openFilterModal()">
+                🔍 فلترة العقارات
+            </button>
+        </div>
     </header>
+
+    <!-- صندوق البحث السريع برقم العقار على اليمين -->
+    <div class="quick-search-box">
+        <input type="text" id="quickPropInput" placeholder="رقم العقار..." onkeydown="if(event.key==='Enter') searchByPropertyId()">
+        <button onclick="searchByPropertyId()">بحث</button>
+    </div>
 
     <div class="quick-call-widget">
         <a href="tel:+963949041251" class="call-btn" title="اتصال مباشر">
@@ -556,7 +608,6 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- إضافة مكتبة توزيع الدبابيس المتراكمة (MarkerCluster) -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -582,7 +633,6 @@
             updateWhenZooming: false
         }).addTo(map);
 
-        // تصحيح فوري لحجم الخريطة لضمان ملء الشاشة تماماً وإلغاء أي فراغ أخضر
         setTimeout(() => {
             map.invalidateSize();
         }, 200);
@@ -615,9 +665,8 @@
         let allProperties = {};
         let currentImagesList = [];
         let currentImageIndex = 0;
-        let activeSelectedPropKey = null; // الاحتفاظ بمفتاح العقار الحالي المفتوح لغرض المشاركة
+        let activeSelectedPropKey = null;
         
-        // إنشاء مجموعة دبابيس تدعم التجميع والتوزيع التلقائي (Spiderfy) عند التداخل
         const markersClusterGroup = L.markerClusterGroup({
             spiderfyOnMaxZoom: true,
             showCoverageOnHover: false,
@@ -638,7 +687,6 @@
             document.getElementById('filterModal').style.display = 'none';
         }
 
-        // دالة إظهار إشعار نسخ الرابط
         function showToast() {
             const toast = document.getElementById('toastNotification');
             toast.classList.add('show');
@@ -647,7 +695,6 @@
             }, 2500);
         }
 
-        // دالة نسخ ومشاركة رابط العقار الحالي
         function shareCurrentProperty() {
             if (!activeSelectedPropKey) return;
             const baseUrl = window.location.href.split('?')[0];
@@ -665,6 +712,118 @@
                 }).catch(() => {
                     prompt("انسخ الرابط التالي:", shareUrl);
                 });
+            }
+        }
+
+        // دالة فتح تفاصيل عقار معين وعرضه على الخريطة
+        function openPropertyDetails(propKey, prop) {
+            activeSelectedPropKey = propKey;
+            if (prop.lat && prop.lng) {
+                map.setView([Number(prop.lat), Number(prop.lng)], 18, {
+                    animate: true,
+                    duration: 0.5
+                });
+            }
+
+            database.ref('property_images/' + propKey).once('value', (imgSnap) => {
+                const imgData = imgSnap.val();
+                currentImagesList = [];
+                if (imgData && imgData.images && Array.isArray(imgData.images)) {
+                    currentImagesList = imgData.images;
+                } else if (prop.images && Array.isArray(prop.images)) {
+                    currentImagesList = prop.images;
+                } else if (prop.image) {
+                    currentImagesList = [prop.image];
+                }
+
+                currentImageIndex = 0;
+                const imgElement = document.getElementById('modalImg');
+                const prevBtn = document.getElementById('prevImgBtn');
+                const nextBtn = document.getElementById('nextImgBtn');
+                const counterBadge = document.getElementById('imageCounter');
+
+                if (currentImagesList.length > 0) {
+                    imgElement.src = currentImagesList[0];
+                } else {
+                    imgElement.src = '';
+                }
+
+                if (currentImagesList.length > 1) {
+                    prevBtn.style.display = 'flex';
+                    nextBtn.style.display = 'flex';
+                    counterBadge.style.display = 'block';
+                    counterBadge.innerText = `1/${currentImagesList.length}`;
+                } else {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                    counterBadge.style.display = 'none';
+                }
+            });
+
+            document.getElementById('modalPrice').innerText = prop.price || '';
+            document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
+            document.getElementById('modalPropId').innerText = prop.propertyId || '---';
+            document.getElementById('modalType').innerText = prop.type || '';
+            
+            const floorItem = document.getElementById('modalFloorItem');
+            if (prop.floor && prop.floor.trim() !== '') {
+                document.getElementById('modalFloor').innerText = prop.floor;
+                floorItem.style.display = 'flex';
+            } else {
+                floorItem.style.display = 'none';
+            }
+
+            document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
+            document.getElementById('modalLayout').innerText = prop.layout || '';
+            document.getElementById('modalLegal').innerText = prop.legalStatus || '';
+            document.getElementById('modalBazar').innerText = prop.bazarStatus || '';
+
+            const notesContainer = document.getElementById('modalNotesContainer');
+            if (prop.notes) {
+                document.getElementById('modalNotes').innerText = prop.notes;
+                notesContainer.style.display = 'block';
+            } else {
+                notesContainer.style.display = 'none';
+            }
+
+            const phoneNum = prop.whatsappNumber || '963949041251';
+            document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=` + encodeURIComponent(`مرحباً، أنا مهتم بالعقار رقم (${prop.propertyId}) وأرغب ببعض التفاصيل الإضافية.`);
+
+            const videoBtn = document.getElementById('modalVideoBtn');
+            if (prop.instagramVideoUrl) {
+                videoBtn.style.display = 'inline-flex';
+                videoBtn.href = prop.instagramVideoUrl;
+            } else {
+                videoBtn.style.display = 'none';
+            }
+
+            document.getElementById('propertyModal').style.display = 'flex';
+        }
+
+        // دالة البحث برقم العقار من خلال الصندوق الصغير على اليمين
+        function searchByPropertyId() {
+            const queryVal = document.getElementById('quickPropInput').value.trim();
+            if (!queryVal) {
+                alert("الرجاء إدخال رقم العقار للبحث.");
+                return;
+            }
+
+            let foundKey = null;
+            let foundProp = null;
+
+            // البحث إما بمفتاح العقار المباشر أو بقيمة حقل propertyId
+            Object.keys(allProperties).forEach(key => {
+                const prop = allProperties[key];
+                if (prop && (key.toString() === queryVal || String(prop.propertyId).trim() === queryVal)) {
+                    foundKey = key;
+                    foundProp = prop;
+                }
+            });
+
+            if (foundProp) {
+                openPropertyDetails(foundKey, foundProp);
+            } else {
+                alert("لم يتم العثور على عقار يحمل الرقم: " + queryVal);
             }
         }
 
@@ -696,85 +855,7 @@
                     });
 
                     marker.on('click', function() {
-                        activeSelectedPropKey = prop.key;
-                        map.setView([prop.lat, prop.lng], 18, {
-                            animate: true,
-                            duration: 0.5
-                        });
-
-                        database.ref('property_images/' + prop.key).once('value', (imgSnap) => {
-                            const imgData = imgSnap.val();
-                            currentImagesList = [];
-                            if (imgData && imgData.images && Array.isArray(imgData.images)) {
-                                currentImagesList = imgData.images;
-                            } else if (prop.images && Array.isArray(prop.images)) {
-                                currentImagesList = prop.images;
-                            } else if (prop.image) {
-                                currentImagesList = [prop.image];
-                            }
-
-                            currentImageIndex = 0;
-                            const imgElement = document.getElementById('modalImg');
-                            const prevBtn = document.getElementById('prevImgBtn');
-                            const nextBtn = document.getElementById('nextImgBtn');
-                            const counterBadge = document.getElementById('imageCounter');
-
-                            if (currentImagesList.length > 0) {
-                                imgElement.src = currentImagesList[0];
-                            } else {
-                                imgElement.src = '';
-                            }
-
-                            if (currentImagesList.length > 1) {
-                                prevBtn.style.display = 'flex';
-                                nextBtn.style.display = 'flex';
-                                counterBadge.style.display = 'block';
-                                counterBadge.innerText = `1/${currentImagesList.length}`;
-                            } else {
-                                prevBtn.style.display = 'none';
-                                nextBtn.style.display = 'none';
-                                counterBadge.style.display = 'none';
-                            }
-                        });
-
-                        document.getElementById('modalPrice').innerText = prop.price || '';
-                        document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
-                        document.getElementById('modalPropId').innerText = prop.propertyId || '---';
-                        document.getElementById('modalType').innerText = prop.type || '';
-                        
-                        const floorItem = document.getElementById('modalFloorItem');
-                        if (prop.floor && prop.floor.trim() !== '') {
-                            document.getElementById('modalFloor').innerText = prop.floor;
-                            floorItem.style.display = 'flex';
-                        } else {
-                            floorItem.style.display = 'none';
-                        }
-
-                        document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
-                        document.getElementById('modalLayout').innerText = prop.layout || '';
-                        document.getElementById('modalLegal').innerText = prop.legalStatus || '';
-                        document.getElementById('modalBazar').innerText = prop.bazarStatus || '';
-
-                        const notesContainer = document.getElementById('modalNotesContainer');
-                        if (prop.notes) {
-                            document.getElementById('modalNotes').innerText = prop.notes;
-                            notesContainer.style.display = 'block';
-                        } else {
-                            notesContainer.style.display = 'none';
-                        }
-
-                        const phoneNum = prop.whatsappNumber || '963949041251';
-                        document.getElementById('modalWhatsapp').href = `https://wa.me/${phoneNum}?text=` + encodeURIComponent(`مرحباً، أنا مهتم بالعقار رقم (${prop.propertyId}) وأرغب ببعض التفاصيل الإضافية.`);
-
-                        const videoBtn = document.getElementById('modalVideoBtn');
-                        if (prop.instagramVideoUrl) {
-                            videoBtn.style.display = 'inline-flex';
-                            videoBtn.href = prop.instagramVideoUrl;
-                        } else {
-                            videoBtn.style.display = 'none';
-                        }
-
-                        document.getElementById('propertyModal').style.display = 'flex';
+                        openPropertyDetails(prop.key, prop);
                     });
 
                     markersClusterGroup.addLayer(marker);
@@ -795,13 +876,11 @@
             setTimeout(() => { 
                 map.invalidateSize(); 
 
-                // التحقق مما إذا كان هناك رابط مشاركة يحتوي على propertyId عند التحميل لأول مرة
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetPropId = urlParams.get('propertyId');
                 if (targetPropId && allProperties[targetPropId]) {
                     const targetProp = allProperties[targetPropId];
                     if (targetProp.lat && targetProp.lng) {
-                        // توجيه الخريطة لموقع الدبوس وجعله في المنتصف دون فتح نافذة التفاصيل
                         map.setView([Number(targetProp.lat), Number(targetProp.lng)], 18, {
                             animate: true,
                             duration: 0.5
@@ -840,7 +919,7 @@
 
         function resetFilter() {
             document.getElementById('filterType').value = '';
-            document.getElementById('filterPrice').value = '';
+            document.getElementById('filterPrice'].value = '';
             renderPropertiesFast(allProperties);
             closeFilterModal();
         }
