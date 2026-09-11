@@ -284,6 +284,50 @@
             justify-content: center;
         }
 
+        /* زر المشاركة بجانب زر الإغلاق */
+        .modal-share-btn {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            background: var(--accent-gold);
+            color: var(--primary-green);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 15px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* إشعار منبثق عند نسخ الرابط */
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: var(--primary-green);
+            color: #ffffff;
+            border: 2px solid var(--accent-gold);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            z-index: 5000;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
         .modal-media-container {
             position: relative;
             width: 100%;
@@ -438,6 +482,11 @@
 
     <div id="map"></div>
 
+    <!-- إشعار نسخ الرابط -->
+    <div id="toastNotification" class="toast-notification">
+        <span>🔗 تم نسخ رابط العقار بنجاح!</span>
+    </div>
+
     <div id="filterModal" class="filter-modal-overlay">
         <div class="filter-modal-card">
             <h3>تصفية العقارات</h3>
@@ -472,6 +521,7 @@
     <div id="propertyModal" class="modal-overlay">
         <div class="modal-card">
             <button class="modal-close-btn" onclick="closeModal()">×</button>
+            <button class="modal-share-btn" onclick="shareCurrentProperty()" title="نسخ رابط العقار ومشاركته">🔗</button>
             <div class="modal-media-container">
                 <img id="modalImg" src="" alt="صورة العقار">
                 <button id="prevImgBtn" class="slider-nav-btn slider-prev" onclick="changeImage(-1)" style="display:none;">❮</button>
@@ -565,6 +615,7 @@
         let allProperties = {};
         let currentImagesList = [];
         let currentImageIndex = 0;
+        let activeSelectedPropKey = null; // الاحتفاظ بمفتاح العقار الحالي المفتوح لغرض المشاركة
         
         // إنشاء مجموعة دبابيس تدعم التجميع والتوزيع التلقائي (Spiderfy) عند التداخل
         const markersClusterGroup = L.markerClusterGroup({
@@ -585,6 +636,36 @@
 
         function closeFilterModal() {
             document.getElementById('filterModal').style.display = 'none';
+        }
+
+        // دالة إظهار إشعار نسخ الرابط
+        function showToast() {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // دالة نسخ ومشاركة رابط العقار الحالي
+        function shareCurrentProperty() {
+            if (!activeSelectedPropKey) return;
+            const baseUrl = window.location.href.split('?')[0];
+            const shareUrl = `${baseUrl}?propertyId=${activeSelectedPropKey}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'بلان هاوس | عقار مميز',
+                    text: 'شاهد موقع هذا العقار على الخريطة:',
+                    url: shareUrl,
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showToast();
+                }).catch(() => {
+                    prompt("انسخ الرابط التالي:", shareUrl);
+                });
+            }
         }
 
         function changeImage(direction) {
@@ -615,6 +696,7 @@
                     });
 
                     marker.on('click', function() {
+                        activeSelectedPropKey = prop.key;
                         map.setView([prop.lat, prop.lng], 18, {
                             animate: true,
                             duration: 0.5
@@ -710,7 +792,23 @@
         database.ref('properties').on('value', (snapshot) => {
             allProperties = snapshot.val() || {};
             renderPropertiesFast(allProperties);
-            setTimeout(() => { map.invalidateSize(); }, 150);
+            setTimeout(() => { 
+                map.invalidateSize(); 
+
+                // التحقق مما إذا كان هناك رابط مشاركة يحتوي على propertyId عند التحميل لأول مرة
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetPropId = urlParams.get('propertyId');
+                if (targetPropId && allProperties[targetPropId]) {
+                    const targetProp = allProperties[targetPropId];
+                    if (targetProp.lat && targetProp.lng) {
+                        // توجيه الخريطة لموقع الدبوس وجعله في المنتصف دون فتح نافذة التفاصيل
+                        map.setView([Number(targetProp.lat), Number(targetProp.lng)], 18, {
+                            animate: true,
+                            duration: 0.5
+                        });
+                    }
+                }
+            }, 250);
         });
 
         function applyFilter() {
