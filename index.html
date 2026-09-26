@@ -7,13 +7,29 @@
     <!-- كود إثبات الملكية لجوجل -->
     <meta name="google-site-verification" content="6T7FpCzFeBheaRSmdkRkzJihbzX_5V96bD8Hlb61_b8" />
 
+    <!-- كود الهيمنة والبيانات المهيكلة للعلامة التجارية لضمان الصدارة في البحث -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "name": "Bleni House - بلان هاوس",
+      "alternateName": ["بلان هاوس", "Bleni House"],
+      "url": "https://w2ty9tbfrn-pixel.github.io/bleni_house/",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "دمشق",
+        "addressCountry": "SY"
+      },
+      "priceRange": "$$$"
+    }
+    </script>
+
     <!-- وسوم محركات البحث -->
     <title>بلان هاوس | شقق وعقارات للبيع والإيجار على الخريطة</title>
     <meta name="description" content="تصفح أحدث الشقق السكنية، الفلل، والمزارع للبيع والإيجار في سوريا عبر خريطة تفاعلية دقيقة مع شركة بلان هاوس. تواصل مباشر واستكشاف فوري." />
     <meta name="keywords" content="عقارات للبيع, شقق دمشق, بلان هاوس, شراء شقة, عقارات سوريا, استثمار عقاري, شقق سوبر ديلوكس">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- إضافة ملفات تصميم تجميع وتوزيع الدبابيس (MarkerCluster) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <style>
@@ -84,7 +100,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
-        /* صندوق البحث السريع برقم العقار على اليمين */
         .quick-search-box {
             position: fixed;
             top: 70px;
@@ -331,7 +346,6 @@
             justify-content: center;
         }
 
-        /* زر المشاركة بجانب زر الإغلاق */
         .modal-share-btn {
             position: absolute;
             top: 10px;
@@ -351,7 +365,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        /* إشعار منبثق عند نسخ الرابط */
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -519,7 +532,6 @@
         </button>
     </header>
 
-    <!-- صندوق البحث السريع برقم العقار على اليمين -->
     <div class="quick-search-box">
         <input type="text" id="quickPropInput" placeholder="رقم العقار..." onkeydown="if(event.key==='Enter') searchByPropertyId()">
         <button onclick="searchByPropertyId()">بحث</button>
@@ -535,7 +547,6 @@
 
     <div id="map"></div>
 
-    <!-- إشعار نسخ الرابط -->
     <div id="toastNotification" class="toast-notification">
         <span>🔗 تم نسخ رابط العقار بنجاح!</span>
     </div>
@@ -560,8 +571,8 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label>السعر التقريبي ($):</label>
-                <input type="number" id="filterPrice" placeholder="مثال: 50000 (يشمل نطاق +/- 10,000)">
+                <label>أقصى سعر ($) (يظهر كل ما هو أقل):</label>
+                <input type="number" id="filterPrice" placeholder="مثال: 50000">
             </div>
             <div class="filter-actions">
                 <button class="apply-filter-btn" onclick="applyFilter()">تطبيق الفلتر</button>
@@ -589,6 +600,7 @@
                 
                 <div class="property-lines">
                     <div class="property-line-item"><span>رقم العقار:</span> <span id="modalPropId"></span></div>
+                    <div class="property-line-item"><span>حالة البيع:</span> <span id="modalSoldStatus" style="color: green; font-weight: bold;">متاح</span></div>
                     <div class="property-line-item"><span>نوع العقار:</span> <span id="modalType"></span></div>
                     <div class="property-line-item" id="modalFloorItem" style="display:none;"><span>الطابق:</span> <span id="modalFloor"></span></div>
                     <div class="property-line-item"><span>المساحة:</span> <span id="modalArea"></span></div>
@@ -609,7 +621,6 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- إضافة مكتبة توزيع الدبابيس المتراكمة (MarkerCluster) -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -635,7 +646,6 @@
             updateWhenZooming: false
         }).addTo(map);
 
-        // تصحيح فوري لحجم الخريطة لضمان ملء الشاشة تماماً وإلغاء أي فراغ أخضر
         setTimeout(() => {
             map.invalidateSize();
         }, 200);
@@ -668,9 +678,8 @@
         let allProperties = {};
         let currentImagesList = [];
         let currentImageIndex = 0;
-        let activeSelectedPropKey = null; // الاحتفاظ بمفتاح العقار الحالي المفتوح لغرض المشاركة
+        let activeSelectedPropKey = null;
         
-        // إنشاء مجموعة دبابيس تدعم التجميع والتوزيع التلقائي (Spiderfy) عند التداخل
         const markersClusterGroup = L.markerClusterGroup({
             spiderfyOnMaxZoom: true,
             showCoverageOnHover: false,
@@ -691,7 +700,6 @@
             document.getElementById('filterModal').style.display = 'none';
         }
 
-        // دالة إظهار إشعار نسخ الرابط
         function showToast() {
             const toast = document.getElementById('toastNotification');
             toast.classList.add('show');
@@ -700,7 +708,6 @@
             }, 2500);
         }
 
-        // دالة نسخ ومشاركة رابط العقار الحالي
         function shareCurrentProperty() {
             if (!activeSelectedPropKey) return;
             const baseUrl = window.location.href.split('?')[0];
@@ -733,7 +740,6 @@
             document.getElementById('imageCounter').innerText = (currentImageIndex + 1) + '/' + currentImagesList.length;
         }
 
-        // دالة موحدة لعرض نافذة معلومات العقار وتوجيه الخريطة إليه
         function triggerPropertyPopup(propKey, prop) {
             activeSelectedPropKey = propKey;
             map.setView([prop.lat, prop.lng], 18, {
@@ -779,6 +785,16 @@
             document.getElementById('modalPrice').innerText = prop.price || '';
             document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
             document.getElementById('modalPropId').innerText = prop.propertyId || '---';
+            
+            const soldStatusSpan = document.getElementById('modalSoldStatus');
+            if (prop.isSold) {
+                soldStatusSpan.innerText = "تم البيع 🛑";
+                soldStatusSpan.style.color = "red";
+            } else {
+                soldStatusSpan.innerText = "متاح ✅";
+                soldStatusSpan.style.color = "green";
+            }
+
             document.getElementById('modalType').innerText = prop.type || '';
             
             const floorItem = document.getElementById('modalFloorItem');
@@ -816,7 +832,6 @@
             document.getElementById('propertyModal').style.display = 'flex';
         }
 
-        // دالة البحث برقم العقار من الصندوق الصغير
         function searchByPropertyId() {
             const queryVal = document.getElementById('quickPropInput').value.trim();
             if (!queryVal) {
@@ -879,7 +894,6 @@
             setTimeout(() => { 
                 map.invalidateSize(); 
 
-                // التحقق مما إذا كان هناك رابط مشاركة يحتوي على propertyId عند التحميل لأول مرة
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetPropId = urlParams.get('propertyId');
                 if (targetPropId && allProperties[targetPropId]) {
@@ -894,11 +908,12 @@
             }, 250);
         });
 
+        // تعديل فلتر السعر ليظهر كل العقارات أقل من أو تساوي السعر المحدد
         function applyFilter() {
             const selectedType = document.getElementById('filterType').value;
             const priceInput = document.getElementById('filterPrice').value;
 
-            const targetPrice = priceInput ? parseFloat(priceInput) : null;
+            const maxPrice = priceInput ? parseFloat(priceInput) : null;
 
             const filtered = {};
             Object.keys(allProperties).forEach(key => {
@@ -907,9 +922,9 @@
 
                 if (selectedType && prop.type !== selectedType) return;
 
-                if (targetPrice !== null) {
+                if (maxPrice !== null) {
                     const priceNum = parseFloat(String(prop.price).replace(/[^0-9.]/g, '')) || 0;
-                    if (priceNum < (targetPrice - 10000) || priceNum > (targetPrice + 10000)) {
+                    if (priceNum > maxPrice) {
                         return;
                     }
                 }
