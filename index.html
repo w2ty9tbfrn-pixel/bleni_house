@@ -85,6 +85,26 @@
             color: var(--accent-gold);
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .install-app-btn {
+            background-color: transparent;
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.78rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .filter-btn-header {
             background-color: var(--accent-gold);
             color: var(--primary-green);
@@ -527,9 +547,15 @@
         <div class="brand-title">
             Bleni House <span>| بلان هاوس</span>
         </div>
-        <button class="filter-btn-header" onclick="openFilterModal()">
-            🔍 فلترة العقارات
-        </button>
+        <div class="header-actions">
+            <!-- زر تثبيت التطبيق المضاف بدون تعديل أي شيء آخر -->
+            <button class="install-app-btn" onclick="openInstallInstructions()">
+                📱 ثبت التطبيق
+            </button>
+            <button class="filter-btn-header" onclick="openFilterModal()">
+                🔍 فلترة العقارات
+            </button>
+        </div>
     </header>
 
     <div class="quick-search-box">
@@ -549,6 +575,20 @@
 
     <div id="toastNotification" class="toast-notification">
         <span>🔗 تم نسخ رابط العقار بنجاح!</span>
+    </div>
+
+    <!-- نافذة إرشادات تثبيت التطبيق -->
+    <div id="installModal" class="modal-overlay">
+        <div class="filter-modal-card">
+            <h3>تثبيت تطبيق بلان هاوس</h3>
+            <p style="font-size: 0.88rem; color: #444; line-height: 1.6; margin-bottom: 15px;">
+                لتثبيت التطبيق على هاتفك والوصول إليه بسرعة كأي تطبيق خارجي:<br><br>
+                <b>- أجهزة أندرويد (كروم):</b> اضغط على القائمة (3 نقاط أعلى اليمين) ثم اختر <b>"إضافة إلى الشاشة الرئيسية"</b>.<br><br>
+                <b>- أجهزة أيفون (سفاري):</b> اضغط على زر المشاركة أسفل الشاشة ثم اختر <b>"إضافة إلى الشاشة الرئيسية"</b>.
+            </p>
+            <button class="apply-filter-btn" onclick="closeInstallModal()">فهمت ذلك</button>
+            <button class="modal-close-btn" onclick="closeInstallModal()">×</button>
+        </div>
     </div>
 
     <div id="filterModal" class="filter-modal-overlay">
@@ -698,6 +738,15 @@
 
         function closeFilterModal() {
             document.getElementById('filterModal').style.display = 'none';
+        }
+
+        // دوال التحكم بنافذة إرشادات التثبيت
+        function openInstallInstructions() {
+            document.getElementById('installModal').style.display = 'flex';
+        }
+
+        function closeInstallModal() {
+            document.getElementById('installModal').style.display = 'none';
         }
 
         function showToast() {
@@ -908,7 +957,6 @@
             }, 250);
         });
 
-        // تعديل فلتر السعر ليظهر كل العقارات أقل من أو تساوي السعر المحدد
         function applyFilter() {
             const selectedType = document.getElementById('filterType').value;
             const priceInput = document.getElementById('filterPrice').value;
