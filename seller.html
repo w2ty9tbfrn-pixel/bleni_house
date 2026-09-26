@@ -93,6 +93,35 @@
             outline: none;
         }
 
+        /* صندوق البحث الجانبي برقم العقار في كود البائع */
+        .seller-quick-search {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            background: #fdf8e2;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--accent-gold);
+        }
+
+        .seller-quick-search input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .seller-quick-search button {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .images-preview-grid {
             display: flex;
             flex-wrap: wrap;
@@ -279,6 +308,12 @@
     </header>
 
     <div class="main-container">
+        <!-- صندوق البحث السريع برقم العقار في لوحة المالك -->
+        <div class="seller-quick-search">
+            <input type="text" id="sellerSearchInput" placeholder="بحث سريع برقم العقار..." onkeypress="if(event.key==='Enter') searchSellerByPropertyId()">
+            <button type="button" onclick="searchSellerByPropertyId()">بحث</button>
+        </div>
+
         <form id="property-form" onsubmit="handleCloudFormSubmit(event)">
             <input type="hidden" id="editKey" value="">
             <div class="card">
@@ -287,6 +322,13 @@
                 <div class="form-group">
                     <label>رقم العقار</label>
                     <input type="text" id="propertyId" class="form-control" placeholder="مثال: 105" required>
+                </div>
+
+                <!-- خانة تم البيع عند التعديل والإضافة -->
+                <div class="form-group" style="background: #e2f0d9; padding: 10px; border-radius: 6px; border: 1px solid #c8e1b7;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #274e13; font-weight: bold;">
+                        <input type="checkbox" id="isSold" style="width: 18px; height: 18px;"> تم بيع هذا العقار (تحديث حالة البيع)
+                    </label>
                 </div>
 
                 <div class="form-group">
@@ -500,6 +542,29 @@
                 });
         };
 
+        // دالة البحث السريع برقم العقار في لوحة البائع
+        window.searchSellerByPropertyId = function() {
+            const query = document.getElementById('sellerSearchInput').value.trim();
+            if (!query) {
+                alert("الرجاء إدخال رقم العقار للبحث.");
+                return;
+            }
+
+            let foundKey = null;
+            Object.keys(allPropertiesCache).forEach(key => {
+                const prop = allPropertiesCache[key];
+                if (prop && String(prop.propertyId).trim() === query) {
+                    foundKey = key;
+                }
+            });
+
+            if (foundKey) {
+                startEdit(foundKey);
+            } else {
+                alert("لم يتم العثور على عقار برقم: " + query);
+            }
+        };
+
         window.onload = function() {
             initPickerMap();
         };
@@ -608,13 +673,15 @@
                         thumbImg = prop.image;
                     }
 
+                    const soldBadge = prop.isSold ? '<span style="color:red; font-weight:bold;">(تم البيع)</span>' : '';
+
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'property-list-item';
                     itemDiv.innerHTML = `
                         <div class="prop-info">
                             <img src="${thumbImg}" class="prop-thumb" alt="صورة">
                             <div class="prop-details">
-                                <h4>عقار #${prop.propertyId || '---'} (${prop.type || ''})</h4>
+                                <h4>عقار #${prop.propertyId || '---'} (${prop.type || ''}) ${soldBadge}</h4>
                                 <p>${prop.price || ''} - ${prop.location || ''}</p>
                             </div>
                         </div>
@@ -636,6 +703,7 @@
 
             document.getElementById('editKey').value = key;
             document.getElementById('propertyId').value = prop.propertyId || '';
+            document.getElementById('isSold').checked = prop.isSold || false;
             document.getElementById('type').value = prop.type || 'شقة سوبر ديلوكس';
             document.getElementById('floor').value = prop.floor || '';
             document.getElementById('area').value = prop.area || '';
@@ -749,6 +817,7 @@
 
                 const propertyData = {
                     propertyId: document.getElementById('propertyId').value,
+                    isSold: document.getElementById('isSold').checked,
                     type: document.getElementById('type').value,
                     floor: document.getElementById('floor').value,
                     area: document.getElementById('area').value,
