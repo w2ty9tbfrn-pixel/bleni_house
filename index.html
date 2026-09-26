@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- ربط ملف الـ Manifest لتفعيل التثبيت الذكي -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1b3b2b">
-
     <!-- كود إثبات الملكية لجوجل -->
     <meta name="google-site-verification" content="6T7FpCzFeBheaRSmdkRkzJihbzX_5V96bD8Hlb61_b8" />
 
@@ -87,26 +83,6 @@
 
         .brand-title span {
             color: var(--accent-gold);
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .install-app-btn {
-            background-color: transparent;
-            color: var(--accent-gold);
-            border: 1px solid var(--accent-gold);
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 0.78rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
         .filter-btn-header {
@@ -551,15 +527,9 @@
         <div class="brand-title">
             Bleni House <span>| بلان هاوس</span>
         </div>
-        <div class="header-actions">
-            <!-- زر تثبيت التطبيق الذكي (يعمل مباشراً للأندرويد، أو يعرض الإرشاد للآيفون) -->
-            <button class="install-app-btn" onclick="handleInstallClick()">
-                📱 ثبت التطبيق
-            </button>
-            <button class="filter-btn-header" onclick="openFilterModal()">
-                🔍 فلترة العقارات
-            </button>
-        </div>
+        <button class="filter-btn-header" onclick="openFilterModal()">
+            🔍 فلترة العقارات
+        </button>
     </header>
 
     <div class="quick-search-box">
@@ -579,20 +549,6 @@
 
     <div id="toastNotification" class="toast-notification">
         <span>🔗 تم نسخ رابط العقار بنجاح!</span>
-    </div>
-
-    <!-- نافذة إرشادات تثبيت التطبيق (تظهر خصيصاً لأجهزة الآيفون أو إذا لم يتوفر حدث التثبيت المباشر) -->
-    <div id="installModal" class="modal-overlay">
-        <div class="filter-modal-card">
-            <h3>تثبيت تطبيق بلان هاوس</h3>
-            <p style="font-size: 0.88rem; color: #444; line-height: 1.6; margin-bottom: 15px;">
-                لتثبيت التطبيق على هاتفك والوصول إليه بسرعة كأي تطبيق خارجي:<br><br>
-                <b>- أجهزة أندرويد:</b> اضغط على زر التثبيت مباشرة لتبدأ عملية التحميل.<br><br>
-                <b>- أجهزة أيفون (سفاري):</b> اضغط على زر المشاركة أسفل الشاشة ⎋ ثم اختر <b>"إضافة إلى الشاشة الرئيسية" ➕</b>.
-            </p>
-            <button class="apply-filter-btn" onclick="closeInstallModal()">فهمت ذلك</button>
-            <button class="modal-close-btn" onclick="closeInstallModal()">×</button>
-        </div>
     </div>
 
     <div id="filterModal" class="filter-modal-overlay">
@@ -670,30 +626,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // برمجية التثبيت الذكي للأندرويد والآيفون
-        let deferredPrompt = null;
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e; // حفظ الحدث لعرض نافذة التثبيت الرسمية للأندرويد فور الضغط
-        });
-
-        function handleInstallClick() {
-            if (deferredPrompt) {
-                // تفعيل نافذة التثبيت التلقائية الفورية للأندرويد
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            } else {
-                // إذا كان جهاز آيفون أو متصفح لا يدعم الحدث، تفتح نافذة التوضيح والإرشادات الخاصة بالآيفون
-                openInstallInstructions();
-            }
-        }
-
         const map = L.map('map', { 
             zoomControl: true,
             minZoom: 3,
@@ -766,14 +698,6 @@
 
         function closeFilterModal() {
             document.getElementById('filterModal').style.display = 'none';
-        }
-
-        function openInstallInstructions() {
-            document.getElementById('installModal').style.display = 'flex';
-        }
-
-        function closeInstallModal() {
-            document.getElementById('installModal').style.display = 'none';
         }
 
         function showToast() {
@@ -984,6 +908,7 @@
             }, 250);
         });
 
+        // تعديل فلتر السعر ليظهر كل العقارات أقل من أو تساوي السعر المحدد
         function applyFilter() {
             const selectedType = document.getElementById('filterType').value;
             const priceInput = document.getElementById('filterPrice').value;
