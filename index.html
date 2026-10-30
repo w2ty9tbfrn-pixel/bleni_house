@@ -163,6 +163,40 @@
             z-index: 700 !important;
         }
 
+        /* صندوق المفتاح التوضيحي للدبابيس على الخريطة */
+        .map-legend-box {
+            position: fixed;
+            bottom: 25px;
+            left: 15px;
+            background: rgba(27, 59, 43, 0.95);
+            border: 2px solid var(--accent-gold);
+            padding: 8px 12px;
+            border-radius: 12px;
+            z-index: 998;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            direction: rtl;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+            font-size: 0.78rem;
+            font-weight: bold;
+        }
+
+        .legend-pin {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
         .quick-call-widget {
             position: fixed;
             right: 12px;
@@ -244,7 +278,6 @@
             padding-bottom: 6px;
         }
 
-        /* أزرار الفلتر المتجاورة (شراء / استئجار) */
         .filter-tabs {
             display: flex;
             gap: 8px;
@@ -584,6 +617,18 @@
         <button onclick="searchByPropertyId()">بحث</button>
     </div>
 
+    <!-- المفتاح التوضيحي لدبابيس الخريطة (شساع الاستئجار والبيع) -->
+    <div class="map-legend-box">
+        <div class="legend-item">
+            <span class="legend-pin" style="background-color: #ffd700;"></span>
+            <span>عقارات البيع</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-pin" style="background-color: #1b3b2b;"></span>
+            <span>عقارات الإيجار</span>
+        </div>
+    </div>
+
     <div class="quick-call-widget">
         <a href="tel:+963949041251" class="call-btn" title="اتصال مباشر">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="#ffffff">
@@ -598,7 +643,6 @@
         <span>🔗 تم نسخ رابط العقار بنجاح!</span>
     </div>
 
-    <!-- نافذة الفلترة المحدثة بأزرار الشراء والاستئجار -->
     <div id="filterModal" class="filter-modal-overlay">
         <div class="filter-modal-card">
             <h3>تصفية العقارات</h3>
@@ -662,7 +706,7 @@
                     <div class="property-line-item" id="modalFloorItem" style="display:none;"><span>الطابق:</span> <span id="modalFloor"></span></div>
                     <div class="property-line-item"><span>المساحة:</span> <span id="modalArea"></span></div>
                     <div class="property-line-item"><span>التقسيم:</span> <span id="modalLayout"></span></div>
-                    <!-- حقل السند القانوني الذي سيتم إخفاؤه تلقائياً في الإيجار -->
+                    <!-- حقل السند القانوني الذي يتم إخفاؤه تلقائياً في الإيجار -->
                     <div class="property-line-item" id="modalLegalItem"><span>السند القانوني:</span> <span id="modalLegal"></span></div>
                     <div class="property-line-item"><span>حالة السعر:</span> <span id="modalBazar"></span></div>
                 </div>
@@ -708,7 +752,6 @@
             map.invalidateSize();
         }, 200);
 
-        // دالة إنشاء الأيقونات (دبوس ذهبي للبيع، وزيتوني #1b3b2b للإيجار)
         function createCustomIcon(isRent) {
             const pinColor = isRent ? '#1b3b2b' : '#ffd700';
             const svgIcon = `
@@ -737,7 +780,7 @@
         let currentImagesList = [];
         let currentImageIndex = 0;
         let activeSelectedPropKey = null;
-        let currentFilterMode = 'sale'; // 'sale' للشراء أو 'rent' للاستئجار
+        let currentFilterMode = 'sale';
         
         const markersClusterGroup = L.markerClusterGroup({
             spiderfyOnMaxZoom: true,
@@ -759,7 +802,6 @@
             document.getElementById('filterModal').style.display = 'none';
         }
 
-        // تبديل أوضاع الفلتر (شراء / استئجار)
         function setFilterMode(mode) {
             currentFilterMode = mode;
             const tabBuy = document.getElementById('tabBuy');
@@ -859,17 +901,15 @@
                 }
             });
 
-            // عرض السعر أو الإيجار الشهري
             const isRentProp = prop.listingType === 'rent';
             let priceText = prop.price || '';
-            if (isRentProp && !priceText.includes('إيجار')) {
+            if (isRentProp && !priceText.includes('إيجار') && !priceText.includes('شهرياً')) {
                 priceText = priceText + ' / شهرياً';
             }
             document.getElementById('modalPrice').innerText = priceText;
-            document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير مححدد');
+            document.getElementById('modalLocation').innerText = '📍 ' + (prop.location || 'الموقع غير محدد');
             document.getElementById('modalPropId').innerText = prop.propertyId || '---';
             
-            // زر الملاحة
             const mapNavBtn = document.getElementById('modalMapNavBtn');
             if (prop.lat && prop.lng) {
                 mapNavBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${prop.lat},${prop.lng}`;
@@ -900,7 +940,6 @@
             document.getElementById('modalArea').innerText = (prop.area || '') + ' م²';
             document.getElementById('modalLayout').innerText = prop.layout || '';
             
-            // إخفاء حقل السند القانوني إذا كان العقار للإيجار
             const legalItem = document.getElementById('modalLegalItem');
             if (isRentProp) {
                 legalItem.style.display = 'none';
@@ -1011,7 +1050,6 @@
             }, 250);
         });
 
-        // فلترة العقارات حسب وضع الشراء أو الاستئجار
         function applyFilter() {
             const selectedType = document.getElementById('filterType').value;
             const priceInput = document.getElementById('filterPrice').value;
@@ -1022,7 +1060,6 @@
                 const prop = allProperties[key];
                 if (!prop) return;
 
-                // التصفية بناءً على وضع الشراء أو الاستئجار
                 const propListingType = prop.listingType || 'sale';
                 if (currentFilterMode === 'sale' && propListingType !== 'sale') return;
                 if (currentFilterMode === 'rent' && propListingType !== 'rent') return;
@@ -1032,10 +1069,8 @@
                 if (targetPrice !== null) {
                     const priceNum = parseFloat(String(prop.price).replace(/[^0-9.]/g, '')) || 0;
                     if (currentFilterMode === 'sale') {
-                        // الشراء: السعر أقل أو يزيد حتى 10,000$
                         if (priceNum > (targetPrice + 10000)) return;
                     } else {
-                        // الإيجار: يجب ألا يتجاوز السعر المدخل
                         if (priceNum > targetPrice) return;
                     }
                 }
