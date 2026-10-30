@@ -324,10 +324,19 @@
                     <input type="text" id="propertyId" class="form-control" placeholder="مثال: 105" required>
                 </div>
 
-                <!-- خانة تم البيع عند التعديل والإضافة -->
+                <!-- خانة نوع العرض (بيع أو إيجار) -->
+                <div class="form-group">
+                    <label>نوع العرض</label>
+                    <select id="listingType" class="form-control" onchange="toggleListingFields()" required>
+                        <option value="sale">بيع العقار</option>
+                        <option value="rent">إيجار العقار</option>
+                    </select>
+                </div>
+
+                <!-- خانة تم البيع/التأجير عند التعديل والإضافة -->
                 <div class="form-group" style="background: #e2f0d9; padding: 10px; border-radius: 6px; border: 1px solid #c8e1b7;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #274e13; font-weight: bold;">
-                        <input type="checkbox" id="isSold" style="width: 18px; height: 18px;"> تم بيع هذا العقار (تحديث حالة البيع)
+                        <input type="checkbox" id="isSold" style="width: 18px; height: 18px;"> تم بيع / تأجير هذا العقار (تحديث الحالة)
                     </label>
                 </div>
 
@@ -362,9 +371,10 @@
                     <input type="text" id="layout" class="form-control" placeholder="مثال: غرفتين وصالون ومنتفعات" required>
                 </div>
 
-                <div class="form-group">
+                <!-- خانة السند القانوني (تخفى تلقائياً عند الإيجار) -->
+                <div class="form-group" id="legalStatusGroup">
                     <label>السند القانوني</label>
-                    <select id="legalStatus" class="form-control" required>
+                    <select id="legalStatus" class="form-control">
                         <option value="طابو أخضر">طابو أخضر</option>
                         <option value="أسهم">أسهم</option>
                         <option value="حكم محكمة">حكم محكمة</option>
@@ -375,7 +385,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>السعر</label>
+                    <label id="priceLabel">السعر</label>
                     <input type="text" id="price" class="form-control" placeholder="مثال: 50,000 $" required>
                 </div>
 
@@ -467,7 +477,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const SECRET_PASSWORD = "123456";
+        // كلمة السر الجديدة (أربعة أصفار وواحد)
+        const SECRET_PASSWORD = "00001";
         let userPass = prompt("أدخل كلمة السر لدخول لوحة المالك:");
         if (userPass !== SECRET_PASSWORD) {
             alert("كلمة السر خاطئة!");
@@ -480,10 +491,11 @@
 
         const UNIFIED_PIN_COLOR = '#ffd700';
 
-        function getCustomIcon() {
+        function getCustomIcon(isRent) {
+            const pinColor = isRent ? '#1b3b2b' : '#ffd700';
             const svgIcon = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.8));">
-                    <path fill="${UNIFIED_PIN_COLOR}" stroke="#1b3b2b" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    <path fill="${pinColor}" stroke="#ffffff" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>`;
             return L.divIcon({
                 html: svgIcon,
@@ -491,6 +503,24 @@
                 iconSize: [32, 32],
                 iconAnchor: [16, 32]
             });
+        }
+
+        // إخفاء/إظهار السند القانوني حسب نوع العرض (بيع أو إيجار)
+        function toggleListingFields() {
+            const listingType = document.getElementById('listingType').value;
+            const legalGroup = document.getElementById('legalStatusGroup');
+            const legalSelect = document.getElementById('legalStatus');
+            const priceLabel = document.getElementById('priceLabel');
+
+            if (listingType === 'rent') {
+                legalGroup.style.display = 'none';
+                legalSelect.removeAttribute('required');
+                priceLabel.innerText = "سعر الإيجار الشهري ($)";
+            } else {
+                legalGroup.style.display = 'block';
+                legalSelect.setAttribute('required', 'true');
+                priceLabel.innerText = "السعر الإجمالي ($)";
+            }
         }
 
         function initPickerMap() {
@@ -509,10 +539,13 @@
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
 
+                const listingType = document.getElementById('listingType').value;
+                const isRent = listingType === 'rent';
+
                 if (currentMarker) {
                     mapPicker.removeLayer(currentMarker);
                 }
-                currentMarker = L.marker([lat, lng], { icon: getCustomIcon() }).addTo(mapPicker);
+                currentMarker = L.marker([lat, lng], { icon: getCustomIcon(isRent) }).addTo(mapPicker);
             });
         }
 
@@ -542,7 +575,6 @@
                 });
         };
 
-        // دالة البحث السريع برقم العقار في لوحة البائع
         window.searchSellerByPropertyId = function() {
             const query = document.getElementById('sellerSearchInput').value.trim();
             if (!query) {
@@ -567,6 +599,7 @@
 
         window.onload = function() {
             initPickerMap();
+            toggleListingFields();
         };
 
         const firebaseConfig = {
@@ -673,7 +706,9 @@
                         thumbImg = prop.image;
                     }
 
-                    const soldBadge = prop.isSold ? '<span style="color:red; font-weight:bold;">(تم البيع)</span>' : '';
+                    const isRent = prop.listingType === 'rent';
+                    const badgeText = isRent ? (prop.isSold ? '(تم التأجير)' : '(إيجار)') : (prop.isSold ? '(تم البيع)' : '(بيع)');
+                    const badgeColor = prop.isSold ? 'red' : 'green';
 
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'property-list-item';
@@ -681,7 +716,7 @@
                         <div class="prop-info">
                             <img src="${thumbImg}" class="prop-thumb" alt="صورة">
                             <div class="prop-details">
-                                <h4>عقار #${prop.propertyId || '---'} (${prop.type || ''}) ${soldBadge}</h4>
+                                <h4>عقار #${prop.propertyId || '---'} (${prop.type || ''}) <span style="color:${badgeColor}; font-weight:bold;">${badgeText}</span></h4>
                                 <p>${prop.price || ''} - ${prop.location || ''}</p>
                             </div>
                         </div>
@@ -703,6 +738,9 @@
 
             document.getElementById('editKey').value = key;
             document.getElementById('propertyId').value = prop.propertyId || '';
+            document.getElementById('listingType').value = prop.listingType || 'sale';
+            toggleListingFields();
+
             document.getElementById('isSold').checked = prop.isSold || false;
             document.getElementById('type').value = prop.type || 'شقة سوبر ديلوكس';
             document.getElementById('floor').value = prop.floor || '';
@@ -752,8 +790,9 @@
 
             if (prop.lat && prop.lng) {
                 mapPicker.setView([prop.lat, prop.lng], 15);
+                const isRent = prop.listingType === 'rent';
                 if (currentMarker) mapPicker.removeLayer(currentMarker);
-                currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon() }).addTo(mapPicker);
+                currentMarker = L.marker([prop.lat, prop.lng], { icon: getCustomIcon(isRent) }).addTo(mapPicker);
             }
 
             document.getElementById('formTitleText').innerText = "تعديل العقار السحابي (رقم: " + prop.propertyId + ")";
@@ -766,6 +805,8 @@
         window.cancelEdit = function() {
             document.getElementById('editKey').value = '';
             document.getElementById('property-form').reset();
+            document.getElementById('listingType').value = 'sale';
+            toggleListingFields();
             selectedImagesBase64 = [];
             renderImagesPreview();
             document.getElementById('whatsappNumber').value = "963949041251";
@@ -814,15 +855,17 @@
 
             try {
                 const editKey = document.getElementById('editKey').value;
+                const listingType = document.getElementById('listingType').value;
 
                 const propertyData = {
                     propertyId: document.getElementById('propertyId').value,
+                    listingType: listingType,
                     isSold: document.getElementById('isSold').checked,
                     type: document.getElementById('type').value,
                     floor: document.getElementById('floor').value,
                     area: document.getElementById('area').value,
                     layout: document.getElementById('layout').value,
-                    legalStatus: document.getElementById('legalStatus').value,
+                    legalStatus: listingType === 'rent' ? '' : document.getElementById('legalStatus').value,
                     price: document.getElementById('price').value,
                     bazarStatus: document.getElementById('bazarStatus').value,
                     location: document.getElementById('location').value,
@@ -860,6 +903,8 @@
                     
                     alert("☁️🚀 تم حفظ ونشر العقار على السحاب وأصبح ظاهراً فوراً على خريطة المشتري!");
                     document.getElementById('property-form').reset();
+                    document.getElementById('listingType').value = 'sale';
+                    toggleListingFields();
                     selectedImagesBase64 = [];
                     renderImagesPreview();
                     document.getElementById('whatsappNumber').value = "963949041251";
